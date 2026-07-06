@@ -1,0 +1,38 @@
+appId: com.markfly.app
+productName: Markfly
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+mac:
+  icon: build/icon.png
+  category: public.app-category.productivity
+  target:
+    - dmg
+    - pkg
+    - zip
+  extendInfo:
+    CFBundleDocumentTypes:
+      - CFBundleTypeName: Markdown Document
+        CFBundleTypeRole: Editor
+        LSHandlerRank: Owner
+        LSItemContentTypes:
+          - net.daringfireball.markdown
+        NSDocumentTypeClass: NSPlainTextDocument
+        CFBundleTypeExtensions:
+          - md
+          - markdown
+          - mdown
+          - markdn
+dmg:
+  title: Markfly
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications

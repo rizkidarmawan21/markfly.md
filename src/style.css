@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+/* Tailwind v4: make `dark:` respond to the .dark class (toggled by toggleTheme)
+   instead of only prefers-color-scheme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Custom style overriding github-markdown-css for dark mode compatibility */
+html, body, #app {
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* ponytail: fullscreen reflow — forces webkit re-render */
+:root:fullscreen, :root:-webkit-full-screen {
+  height: 100vh !important;
+  width: 100vw !important;
+}
+:root:fullscreen #app, :root:-webkit-full-screen #app {
+  height: 100vh !important;
+}
+
+/* Main scroll container for markdown content */
+.markdown-scroll {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: auto;
+  height: 100%;
+  width: 100%;
+}
+
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  flex: 1;
+  margin: 0;
+  padding: 45px;
+}
+
+/* Tables: horizontal scroll instead of clipping */
+.markdown-body table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+/* Code blocks: word-break */
+.markdown-body pre,
+.markdown-body code {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* ponytail: force native list markers — github-markdown-css v5 overrides
+   ol/ul display but skips padding on some nested combos */
+.markdown-body ol,
+.markdown-body ul {
+  list-style: revert !important;
+  padding-left: revert !important;
+}
+.markdown-body ol ol,
+.markdown-body ul ol {
+  list-style-type: lower-roman;
+}
+.markdown-body ol ul,
+.markdown-body ul ul {
+  list-style-type: circle;
+}
+.markdown-body ol ul ul,
+.markdown-body ul ul ul {
+  list-style-type: square;
+}
+
+/* Images: never overflow container */
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
