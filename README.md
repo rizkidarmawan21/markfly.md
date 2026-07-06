@@ -67,8 +67,3 @@ Output in `release/` — `.dmg`, `.pkg`, and `.zip`.
 | Theme stylesheet  | [github-markdown-css](https://github.com/sindresorhus/github-markdown-css)  |
 | Packaging         | [electron-builder](https://www.electron.build/)                             |
 | File watcher      | [chokidar](https://github.com/paulmillr/chokidar)                           |
-
-## Credit
-
-App icon by [darms](https://github.com/darms).
-Built with ❤️ on macOS.
