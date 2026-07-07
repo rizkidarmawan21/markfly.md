@@ -24,8 +24,8 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
         <div class="min-w-0 flex-1">
-          <div class="text-sm font-medium truncate">{{ tab.name }}</div>
-          <div class="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">{{ tab.path }}</div>
+          <div class="text-xs font-medium truncate">{{ tab.name }}</div>
+          <div class="text-[11px] text-gray-400 dark:text-gray-500 truncate mt-0.5">{{ displayPath(tab.path) }}</div>
         </div>
       </div>
     </div>
@@ -63,5 +63,9 @@ function startResize(e: MouseEvent) {
   }
   document.addEventListener('mousemove', onMove)
   document.addEventListener('mouseup', onUp)
+}
+
+function displayPath(p: string): string {
+  return p.replace(/^\/Users\/[^/]+/, '~')
 }
 </script>
