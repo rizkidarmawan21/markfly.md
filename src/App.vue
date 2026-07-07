@@ -109,14 +109,18 @@ const rendered = computed(() => {
   }) as string
 })
 
-function toggleTheme() {
+async function toggleTheme() {
   isDark.value = !isDark.value
-  document.documentElement.classList.toggle('dark', isDark.value)
-  // Dark mode → light disabled, dark enabled; Light mode → light enabled, dark disabled
-  document.getElementById('hljs-light')?.toggleAttribute('disabled', isDark.value)
-  document.getElementById('hljs-dark')?.toggleAttribute('disabled', !isDark.value)
-  document.getElementById('md-light')?.toggleAttribute('disabled', isDark.value)
-  document.getElementById('md-dark')?.toggleAttribute('disabled', !isDark.value)
+  applyTheme(isDark.value)
+  await window.electronAPI.savePref({ dark: isDark.value })
+}
+
+function applyTheme(dark: boolean) {
+  document.documentElement.classList.toggle('dark', dark)
+  document.getElementById('hljs-light')?.toggleAttribute('disabled', dark)
+  document.getElementById('hljs-dark')?.toggleAttribute('disabled', !dark)
+  document.getElementById('md-light')?.toggleAttribute('disabled', dark)
+  document.getElementById('md-dark')?.toggleAttribute('disabled', !dark)
 }
 
 function toggleRaw() {
@@ -167,16 +171,14 @@ onMounted(async () => {
     if (disabled) link.setAttribute('disabled', 'disabled')
     document.head.appendChild(link)
   }
-  const isDarkSystem = window.matchMedia('(prefers-color-scheme: dark)').matches
-  mkLink('hljs-light', lightHljsUrl, isDarkSystem)
-  mkLink('hljs-dark', darkHljsUrl, !isDarkSystem)
-  mkLink('md-light', mdLightUrl, isDarkSystem)
-  mkLink('md-dark', mdDarkUrl, !isDarkSystem)
-
-  if (isDarkSystem) {
-    isDark.value = true
-    document.documentElement.classList.add('dark')
-  }
+  const pref = await window.electronAPI.loadPref()
+  const initialDark = (pref && typeof pref.dark === 'boolean') ? pref.dark : window.matchMedia('(prefers-color-scheme: dark)').matches
+  mkLink('hljs-light', lightHljsUrl, initialDark)
+  mkLink('hljs-dark', darkHljsUrl, !initialDark)
+  mkLink('md-light', mdLightUrl, initialDark)
+  mkLink('md-dark', mdDarkUrl, !initialDark)
+  isDark.value = initialDark
+  applyTheme(initialDark)
 
   window.electronAPI.onFileChanged(async () => {
     if (currentFilePath.value) {

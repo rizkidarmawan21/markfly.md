@@ -8,6 +8,8 @@ interface ElectronAPI {
   getRecentFiles(): Promise<string[]>
   onFileChanged(cb: () => void): () => void
   onOpenFile(cb: (path: string) => void): () => void
+  loadPref(): Promise<Record<string, unknown>>
+  savePref(obj: Record<string, unknown>): Promise<void>
 }
 
 interface Window {

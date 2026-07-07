@@ -18,4 +18,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('open-file', handler)
     return () => ipcRenderer.removeListener('open-file', handler)
   },
+  loadPref: () => ipcRenderer.invoke('load-pref'),
+  savePref: (obj) => ipcRenderer.invoke('save-pref', obj),
 })

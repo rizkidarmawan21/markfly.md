@@ -123,6 +123,14 @@ function setupIPC() {
   ipcMain.handle('get-recent-files', async () => {
     return [...recentFiles]
   })
+
+  const prefsPath = path.join(app.getPath('userData'), 'prefs.json')
+  ipcMain.handle('load-pref', async () => {
+    try { return JSON.parse(fs.readFileSync(prefsPath, 'utf-8')) } catch { return {} }
+  })
+  ipcMain.handle('save-pref', async (_e, obj) => {
+    try { fs.writeFileSync(prefsPath, JSON.stringify(obj), 'utf-8') } catch { /* best-effort */ }
+  })
 }
 
 // --- Window ---
@@ -141,12 +149,16 @@ function createWindow() {
     },
   })
 
-  if (isDev) {
-    mainWin.loadURL('http://localhost:5173')
-  } else {
-    mainWin.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
-  }
+  const loadPromise = isDev
+    ? mainWin.loadURL('http://localhost:5173')
+    : mainWin.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
 
+  loadPromise.then(() => {
+    if (pendingOpenFile) {
+      openFile(pendingOpenFile)
+      pendingOpenFile = null
+    }
+  })
 }
 
 // Register at module level — macOS open-file fires before ready
@@ -156,6 +168,9 @@ app.on('open-file', (event, filePath) => {
     openFile(filePath)
   } else {
     pendingOpenFile = filePath
+    if (!mainWin || mainWin.isDestroyed()) {
+      createWindow()
+    }
   }
 })
 
@@ -163,7 +178,6 @@ app.whenReady().then(() => {
   buildMenu()
   setupIPC()
   createWindow()
-  // pendingOpenFile consumed by renderer onMounted → getArgs
 })
 
 app.on('window-all-closed', () => {
@@ -171,5 +185,11 @@ app.on('window-all-closed', () => {
 })
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow()
+    if (pendingOpenFile) {
+      openFile(pendingOpenFile)
+      pendingOpenFile = null
+    }
+  }
 })
