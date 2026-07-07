@@ -129,7 +129,10 @@ function setupIPC() {
     try { return JSON.parse(fs.readFileSync(prefsPath, 'utf-8')) } catch { return {} }
   })
   ipcMain.handle('save-pref', async (_e, obj) => {
-    try { fs.writeFileSync(prefsPath, JSON.stringify(obj), 'utf-8') } catch { /* best-effort */ }
+    try {
+      const existing = JSON.parse(fs.readFileSync(prefsPath, 'utf-8'))
+      fs.writeFileSync(prefsPath, JSON.stringify({ ...existing, ...obj }), 'utf-8')
+    } catch { fs.writeFileSync(prefsPath, JSON.stringify(obj), 'utf-8') }
   })
 }
 
