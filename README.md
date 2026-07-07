@@ -1,4 +1,4 @@
-# Markfly
+# Markfly.md
 
 <!-- ICON: insert image/icon link here -->
 <p align="center">
