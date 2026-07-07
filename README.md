@@ -2,7 +2,7 @@
 
 <!-- ICON: insert image/icon link here -->
 <p align="center">
-  <img src="build/icon.png" alt="Markfly" width="96" height="96">
+  <img src="https://github.com/user-attachments/assets/5f81ede5-a77c-4613-9c16-a495f9319b3f" alt="Markfly" width="96" height="96">
 </p>
 
 <p align="center"><strong>Minimal, native macOS markdown viewer.</strong></
