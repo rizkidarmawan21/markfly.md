@@ -1,3 +1,8 @@
+interface TabItem {
+  path: string
+  name: string
+}
+
 interface ElectronAPI {
   readFile(path: string): Promise<string>
   watchFile(path: string): Promise<void>

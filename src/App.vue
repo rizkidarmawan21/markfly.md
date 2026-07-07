@@ -254,8 +254,8 @@ onMounted(async () => {
         fileContents.value[p] = text
       } catch { /* file may have been deleted */ }
     }
-    if (pref.activePath && tabs.value.some(t => t.path === pref.activePath)) {
-      activePath.value = pref.activePath
+    if (pref.activePath && tabs.value.some(t => t.path === (pref.activePath as string))) {
+      activePath.value = pref.activePath as string
     } else if (tabs.value.length > 0) {
       activePath.value = tabs.value[0].path
     }
