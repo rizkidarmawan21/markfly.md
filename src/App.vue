@@ -15,7 +15,16 @@
           {{ activeTab ? activeTab.name : 'Markfly' }}
         </span>
       </div>
-      <div class="flex items-center space-x-1"><div class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+      <div class="flex items-center space-x-1">
+        <!-- Zoom & raw toggle (applies to active panel) -->
+        <template v-if="activePanel">
+          <button @click="activePanel.zoom = Math.max(0.5, activePanel.zoom - 0.1)" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-xs leading-none text-gray-500 dark:text-gray-400 cursor-pointer" title="Zoom out">−</button>
+          <span class="text-xs text-gray-400 dark:text-gray-500 select-none w-8 text-center">{{ Math.round(activePanel.zoom * 100) }}%</span>
+          <button @click="activePanel.zoom = Math.min(3, activePanel.zoom + 0.1)" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-xs leading-none text-gray-500 dark:text-gray-400 cursor-pointer" title="Zoom in">+</button>
+          <button @click="activePanel.showRaw = !activePanel.showRaw" class="px-2 py-0.5 rounded text-xs leading-none cursor-pointer transition-colors"
+            :class="activePanel.showRaw ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400'" title="Toggle raw/preview">&lt;/&gt;</button>
+          <div class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+        </template>
         <button @click="toggleTheme" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer">
           <svg v-if="isDark" class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
           <svg v-else class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
@@ -51,7 +60,6 @@
           :rows="gridRows"
           :fileContents="fileContents"
           :isDark="isDark"
-          @updatePanel="onUpdatePanel"
           @split="onSplit"
           @closePanel="onClosePanel"
           @closeAll="onCloseAll"
@@ -64,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import mdLightUrl from 'github-markdown-css/github-markdown-light.css?url'
 import mdDarkUrl from 'github-markdown-css/github-markdown-dark.css?url'
 import lightHljsUrl from 'highlight.js/styles/github.css?url'
@@ -88,6 +96,10 @@ const gridCols = ref(1)
 const gridRows = ref(1)
 
 const activeTab = computed(() => tabs.value.find(t => t.path === activePath.value))
+const activePanel = computed(() => panels.value.find(p => p.path === activePath.value))
+
+// ponytail: deep watch on panels saves zoom/raw changes from header controls
+watch(panels, saveState, { deep: true })
 
 async function saveState() {
   await window.electronAPI.savePref({
@@ -232,16 +244,6 @@ function onCloseAll() {
   panels.value = [{ id: 'p1', path: null, zoom: 1, showRaw: false }]
   gridCols.value = 1
   gridRows.value = 1
-  saveState()
-}
-
-function onUpdatePanel(id: string, partial: Partial<Panel>) {
-  const idx = panels.value.findIndex(p => p.id === id)
-  if (idx === -1) return
-  Object.assign(panels.value[idx], partial)
-  if (partial.path) {
-    activePath.value = partial.path
-  }
   saveState()
 }
 

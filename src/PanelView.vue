@@ -12,7 +12,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   selectFile: [panelId: string]
   dropFile: [panelId: string, path: string, data: string]
-  updatePanel: [panelId: string, partial: Partial<Panel>]
 }>()
 
 const rendered = computed(() => {
@@ -49,30 +48,6 @@ function onDrop(e: DragEvent) {
     @dragover.prevent
     :data-theme="isDark ? 'dark' : 'light'"
   >
-    <!-- Toolbar: zoom & raw toggle (only when file open) -->
-    <div v-if="panel.path" class="flex items-center justify-end gap-1 px-2 py-1 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-[#161b22]/50">
-      <button
-        @click="emit('updatePanel', panel.id, { zoom: Math.max(0.5, panel.zoom - 0.1) })"
-        class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs leading-none cursor-pointer"
-        title="Zoom out"
-      >−</button>
-      <span class="text-xs text-gray-400 dark:text-gray-500 select-none w-8 text-center">{{ Math.round(panel.zoom * 100) }}%</span>
-      <button
-        @click="emit('updatePanel', panel.id, { zoom: Math.min(3, panel.zoom + 0.1) })"
-        class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs leading-none cursor-pointer"
-        title="Zoom in"
-      >+</button>
-      <div class="w-px h-4 mx-1 bg-gray-200 dark:bg-gray-700"></div>
-      <button
-        @click="emit('updatePanel', panel.id, { showRaw: !panel.showRaw })"
-        class="px-2 py-0.5 rounded text-xs leading-none cursor-pointer transition-colors"
-        :class="panel.showRaw
-          ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
-          : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400'"
-        title="Toggle raw/preview"
-      >&lt;/&gt;</button>
-    </div>
-
     <!-- Empty state -->
     <div
       v-if="!panel.path"

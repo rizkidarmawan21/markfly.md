@@ -12,7 +12,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   split: [dir: 'h' | 'v' | '2x2']
   closePanel: []
-  updatePanel: [panelId: string, partial: Partial<Panel>]
   selectFile: [panelId: string]
   dropFile: [panelId: string, path: string, data: string]
 }>()
@@ -35,7 +34,6 @@ function getContent(panel: Panel): string {
         :content="getContent(panels[0])"
         :isDark="isDark"
         @selectFile="emit('selectFile', $event)"
-        @updatePanel="(id, p) => emit('updatePanel', id, p)"
         @dropFile="onPanelDrop"
       />
     </div>
@@ -57,7 +55,6 @@ function getContent(panel: Panel): string {
             :content="getContent(panel)"
             :isDark="isDark"
             @selectFile="emit('selectFile', $event)"
-            @updatePanel="(id, p) => emit('updatePanel', id, p)"
             @dropFile="onPanelDrop"
           />
         </div>
