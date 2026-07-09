@@ -1,6 +1,20 @@
 interface TabItem {
   path: string
   name: string
+  active?: boolean
+}
+
+interface Panel {
+  id: string
+  path: string | null
+  zoom: number
+  showRaw: boolean
+}
+
+interface PanelLayout {
+  panels: Panel[]
+  cols: number
+  rows: number
 }
 
 interface ElectronAPI {
