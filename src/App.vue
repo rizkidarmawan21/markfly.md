@@ -117,6 +117,9 @@ async function selectFile(path: string) {
     if (!fileContents.value[path]) {
       await loadFileContent(path)
     }
+    // assign to first panel
+    const panel = panels.value.find(p => !p.path) || panels.value[0]
+    if (panel) { panel.path = path }
     saveState()
     return
   }
@@ -124,6 +127,9 @@ async function selectFile(path: string) {
   tabs.value.push({ path, name, active: true })
   activePath.value = path
   await loadFileContent(path)
+  // assign to first empty panel or first panel
+  const panel = panels.value.find(p => !p.path) || panels.value[0]
+  if (panel) { panel.path = path }
   saveState()
 }
 
