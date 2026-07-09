@@ -18,11 +18,17 @@
       <div class="flex items-center space-x-1">
         <!-- Zoom & raw toggle (applies to active panel) -->
         <template v-if="activePanel">
-          <button @click="activePanel.zoom = Math.max(0.5, activePanel.zoom - 0.1)" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-xs leading-none text-gray-500 dark:text-gray-400 cursor-pointer" title="Zoom out">−</button>
+          <button @click="activePanel.zoom = Math.max(0.5, activePanel.zoom - 0.1)" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer" title="Zoom out">
+            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
+          </button>
           <span class="text-xs text-gray-400 dark:text-gray-500 select-none w-8 text-center">{{ Math.round(activePanel.zoom * 100) }}%</span>
-          <button @click="activePanel.zoom = Math.min(3, activePanel.zoom + 0.1)" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-xs leading-none text-gray-500 dark:text-gray-400 cursor-pointer" title="Zoom in">+</button>
-          <button @click="activePanel.showRaw = !activePanel.showRaw" class="px-2 py-0.5 rounded text-xs leading-none cursor-pointer transition-colors"
-            :class="activePanel.showRaw ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400'" title="Toggle raw/preview">&lt;/&gt;</button>
+          <button @click="activePanel.zoom = Math.min(3, activePanel.zoom + 0.1)" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer" title="Zoom in">
+            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+          </button>
+          <button @click="activePanel.showRaw = !activePanel.showRaw" :title="activePanel.showRaw ? 'Show Preview' : 'Show Source'" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+            <svg v-if="!activePanel.showRaw" class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+            <svg v-else class="w-4 h-5 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          </button>
           <div class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1"></div>
         </template>
         <button @click="toggleTheme" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer">
