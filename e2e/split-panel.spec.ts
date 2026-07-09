@@ -33,6 +33,23 @@ test('renders PanelGrid with one panel', async ({ page }) => {
   await expect(page.locator('text=Drop .md here or click to open')).toBeVisible()
 })
 
+test('click empty panel -> openFile dialog -> panel shows content', async ({ page }) => {
+  // Override openFileDialog to return a path, simulating user selecting a file
+  await page.addInitScript(() => {
+    window.electronAPI.openFileDialog = async () => '/Users/test/document.md'
+  })
+
+  await page.goto('http://localhost:5173')
+
+  await page.locator('text=Drop .md here or click to open').click()
+  await page.waitForTimeout(500)
+
+  // Panel header should show document.md
+  await expect(page.locator('.panel-header span')).toHaveText('document.md')
+  // Content should be rendered (markdown-body)
+  await expect(page.locator('.markdown-body')).toBeVisible()
+})
+
 test('panel shows file content when path is set', async ({ page }) => {
   // Inject pref with a file already open
   await page.addInitScript(() => {
@@ -106,6 +123,37 @@ test('split vertical creates two panels', async ({ page }) => {
   // Should see two empty panels
   const dropZones = page.locator('text=Drop .md here or click to open')
   await expect(dropZones).toHaveCount(2)
+})
+
+test('select from sidebar assigns path to panel', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.electronAPI = {
+      readFile: async (path: string) => '# Sidebar doc\n\nSelected from sidebar.',
+      watchFile: async () => {},
+      getArgs: async () => null,
+      getTheme: async () => 'light',
+      openFileDialog: async () => null,
+      openFilePath: async () => true,
+      getRecentFiles: async () => [],
+      onFileChanged: () => {},
+      onOpenFile: () => {},
+      loadPref: async () => ({
+        tabs: [{ path: '/test/sidebar-doc.md', active: true }],
+        activePath: '/test/sidebar-doc.md',
+        panelLayout: { cols: 1, rows: 1, panels: [{ id: 'p1', path: '/test/sidebar-doc.md', zoom: 1, showRaw: false }] },
+      }),
+      savePref: async () => {},
+    }
+  })
+
+  await page.goto('http://localhost:5173')
+  await page.waitForTimeout(500)
+
+  // Panel header shows filename
+  await expect(page.locator('.panel-header span')).toHaveText('sidebar-doc.md')
+  // Markdown body renders
+  await expect(page.locator('.markdown-body')).toBeVisible()
+  await expect(page.locator('.markdown-body h1')).toContainText('Sidebar doc')
 })
 
 test('panel header shows filename', async ({ page }) => {
