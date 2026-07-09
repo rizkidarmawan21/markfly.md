@@ -178,7 +178,6 @@ async function closeTab(path: string) {
   tab.active = false
   delete fileContents.value[path]
   if (path === activePath.value) {
-    const active = activeTabs.value
     const oldIdx = tabs.value.findIndex(t => t.path === path)
     let next: TabItem | null = null
     for (let i = oldIdx + 1; i < tabs.value.length; i++) {
