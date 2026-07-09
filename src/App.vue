@@ -15,22 +15,7 @@
           {{ activeTab ? activeTab.name : 'Markfly' }}
         </span>
       </div>
-      <div class="flex items-center space-x-1">
-        <button @click="zoomOut" title="Zoom Out" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-          <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
-        </button>
-        <span class="text-xs font-mono text-gray-500 dark:text-gray-400 w-10 text-center tabular-nums">{{ Math.round(zoom * 100) }}%</span>
-        <button @click="zoomIn" title="Zoom In" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-          <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-        </button>
-        <button @click="resetZoom" title="Reset Zoom" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer ml-1">
-          <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-        </button>
-        <button @click="toggleRaw" :title="showRaw ? 'Show Preview' : 'Show Source'" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-          <svg v-if="!showRaw" class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
-          <svg v-else class="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-        </button>
-        <div class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+      <div class="flex items-center space-x-1"><div class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1"></div>
         <button @click="toggleTheme" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer">
           <svg v-if="isDark" class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
           <svg v-else class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
@@ -47,38 +32,32 @@
         :visible="sidebarVisible"
         @select="selectFile"
         @update:width="w => sidebarWidth = w"
+        @close="removeTab"
       />
 
       <!-- Content area -->
       <div class="flex-1 flex flex-col overflow-hidden">
         <TabBar
-          :tabs="tabs"
+          :tabs="activeTabs"
           :activePath="activePath"
           @select="selectFile"
           @close="closeTab"
         />
 
-        <!-- Empty state -->
-        <div v-if="!activePath" @click="openFile" class="flex-1 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 cursor-pointer">
-          <div class="w-24 h-24 mb-6 border-4 border-dashed border-gray-300 dark:border-gray-700 rounded-xl flex items-center justify-center bg-gray-50 dark:bg-[#161b22]">
-            <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-          </div>
-          <p class="text-xl font-medium text-gray-600 dark:text-gray-300">Drag & Drop a Markdown file</p>
-          <p class="text-sm mt-2">Click anywhere or drag &amp; drop a .md file</p>
-        </div>
-
-        <!-- Preview area -->
-        <div v-else class="flex-1 w-full bg-white dark:bg-[#0d1117] transition-colors duration-200 markdown-scroll" :data-theme="isDark ? 'dark' : 'light'">
-          <div v-if="showRaw" class="h-full p-4 overflow-auto">
-            <pre class="text-sm font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-all">{{ fileContents[activePath] || '' }}</pre>
-          </div>
-          <article
-            v-else
-            class="markdown-body"
-            :style="{ fontSize: `${zoom * 100}%` }"
-            v-html="rendered">
-          </article>
-        </div>
+        <!-- Panel grid area -->
+        <PanelGrid
+          :panels="panels"
+          :cols="gridCols"
+          :rows="gridRows"
+          :fileContents="fileContents"
+          :isDark="isDark"
+          @updatePanel="onUpdatePanel"
+          @split="onSplit"
+          @closePanel="onClosePanel"
+          @closeAll="onCloseAll"
+          @selectFile="onPanelSelectFile"
+          @dropFile="onPanelDropFile"
+        />
       </div>
     </main>
   </div>
@@ -86,46 +65,42 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { marked } from 'marked'
-import hljs from 'highlight.js'
 import mdLightUrl from 'github-markdown-css/github-markdown-light.css?url'
 import mdDarkUrl from 'github-markdown-css/github-markdown-dark.css?url'
 import lightHljsUrl from 'highlight.js/styles/github.css?url'
 import darkHljsUrl from 'highlight.js/styles/github-dark.css?url'
 import Sidebar from './Sidebar.vue'
 import TabBar from './TabBar.vue'
+import PanelGrid from './PanelGrid.vue'
 
 const tabs = ref<TabItem[]>([])
+
+const activeTabs = computed(() => tabs.value.filter(t => t.active !== false))
 const activePath = ref<string | null>(null)
 const fileContents = ref<Record<string, string>>({})
 const isDark = ref(false)
-const zoom = ref(1)
-const showRaw = ref(false)
 const sidebarVisible = ref(false)
 const sidebarWidth = ref(260)
 
-const activeTab = computed(() => tabs.value.find(t => t.path === activePath.value))
+// Panel state
+const panels = ref<Panel[]>([{ id: 'p1', path: null, zoom: 1, showRaw: false }])
+const gridCols = ref(1)
+const gridRows = ref(1)
 
-const rendered = computed(() => {
-  const content = activePath.value ? fileContents.value[activePath.value] || '' : ''
-  return marked.parse(content, {
-    async: false,
-    walkTokens(token) {
-      if (token.type === 'code') {
-        const lang = hljs.getLanguage(token.lang ?? '') ? (token.lang ?? '') : 'plaintext'
-        token.text = hljs.highlight(token.raw, { language: lang }).value
-      }
-    }
-  }) as string
-})
+const activeTab = computed(() => tabs.value.find(t => t.path === activePath.value))
 
 async function saveState() {
   await window.electronAPI.savePref({
     dark: isDark.value,
     sidebarVisible: sidebarVisible.value,
     sidebarWidth: sidebarWidth.value,
-    tabs: tabs.value.map(t => t.path),
+    tabs: tabs.value.map(t => ({ path: t.path, active: t.active })),
     activePath: activePath.value,
+    panelLayout: {
+      cols: gridCols.value,
+      rows: gridRows.value,
+      panels: panels.value.map(p => ({ ...p })),
+    },
   })
 }
 
@@ -137,6 +112,7 @@ function toggleSidebar() {
 async function selectFile(path: string) {
   const existing = tabs.value.find(t => t.path === path)
   if (existing) {
+    existing.active = true
     activePath.value = path
     if (!fileContents.value[path]) {
       await loadFileContent(path)
@@ -145,22 +121,48 @@ async function selectFile(path: string) {
     return
   }
   const name = path.split('/').pop() || 'Unknown'
-  tabs.value.push({ path, name })
+  tabs.value.push({ path, name, active: true })
   activePath.value = path
   await loadFileContent(path)
   saveState()
 }
 
-async function closeTab(path: string) {
+async function removeTab(path: string) {
   const idx = tabs.value.findIndex(t => t.path === path)
   if (idx === -1) return
   tabs.value.splice(idx, 1)
   delete fileContents.value[path]
-  if (tabs.value.length === 0) {
-    activePath.value = null
-  } else if (path === activePath.value) {
-    const nextIdx = Math.min(idx, tabs.value.length - 1)
-    activePath.value = tabs.value[nextIdx].path
+  if (path === activePath.value) {
+    const active = activeTabs.value
+    if (active.length === 0) {
+      activePath.value = null
+    } else {
+      const nextIdx = Math.min(idx, active.length - 1)
+      activePath.value = active[nextIdx].path
+    }
+  }
+  saveState()
+}
+
+async function closeTab(path: string) {
+  const tab = tabs.value.find(t => t.path === path)
+  if (!tab) return
+  tab.active = false
+  delete fileContents.value[path]
+  if (path === activePath.value) {
+    const active = activeTabs.value
+    const oldIdx = tabs.value.findIndex(t => t.path === path)
+    // pick nearest active tab by original index
+    let next: TabItem | null = null
+    for (let i = oldIdx + 1; i < tabs.value.length; i++) {
+      if (tabs.value[i].active !== false) { next = tabs.value[i]; break }
+    }
+    if (!next) {
+      for (let i = oldIdx - 1; i >= 0; i--) {
+        if (tabs.value[i].active !== false) { next = tabs.value[i]; break }
+      }
+    }
+    activePath.value = next ? next.path : null
   }
   saveState()
 }
@@ -168,9 +170,11 @@ async function closeTab(path: string) {
 async function loadFileContent(filePath: string) {
   try {
     const text = await window.electronAPI.readFile(filePath)
-    fileContents.value[filePath] = text
-    await window.electronAPI.watchFile(filePath)
-    await window.electronAPI.openFilePath(filePath)
+    fileContents.value[filePath] = text ?? '> Permission denied — unable to read this file.'
+    if (text) {
+      await window.electronAPI.watchFile(filePath)
+      await window.electronAPI.openFilePath(filePath)
+    }
   } catch (err) {
     console.error('Error reading file:', err)
   }
@@ -187,13 +191,89 @@ async function openFile() {
   }
 }
 
+// --- Panel handlers ---
+
+function onSplit(dir: 'h' | 'v' | '2x2') {
+  if (dir === 'v') {
+    gridCols.value = 2
+    gridRows.value = 1
+    panels.value.push({ id: 'p2', path: null, zoom: 1, showRaw: false })
+  } else if (dir === 'h') {
+    gridCols.value = 1
+    gridRows.value = 2
+    panels.value.push({ id: 'p2', path: null, zoom: 1, showRaw: false })
+  } else if (dir === '2x2') {
+    gridCols.value = 2
+    gridRows.value = 2
+    if (panels.value.length === 2) {
+      panels.value.push({ id: 'p3', path: null, zoom: 1, showRaw: false })
+      panels.value.push({ id: 'p4', path: null, zoom: 1, showRaw: false })
+    }
+  }
+  saveState()
+}
+
+function onClosePanel() {
+  if (panels.value.length <= 1) return
+  panels.value.pop()
+  if (panels.value.length <= 2 && gridRows.value === 1) gridCols.value = panels.value.length
+  else if (panels.value.length <= 2 && gridCols.value === 1) gridRows.value = panels.value.length
+  else if (panels.value.length === 1) { gridCols.value = 1; gridRows.value = 1 }
+  saveState()
+}
+
+function onCloseAll() {
+  panels.value = [{ id: 'p1', path: null, zoom: 1, showRaw: false }]
+  gridCols.value = 1
+  gridRows.value = 1
+  saveState()
+}
+
+function onUpdatePanel(id: string, partial: Partial<Panel>) {
+  const idx = panels.value.findIndex(p => p.id === id)
+  if (idx === -1) return
+  Object.assign(panels.value[idx], partial)
+  if (partial.path) {
+    activePath.value = partial.path
+  }
+  saveState()
+}
+
+function onPanelSelectFile() {
+  openFile()
+}
+
+function onPanelDropFile(panelId: string, path: string, data: string) {
+  fileContents.value[path] = data
+  if (!tabs.value.find(t => t.path === path)) {
+    const name = path.split('/').pop() || 'Unknown'
+    tabs.value.push({ path, name, active: true })
+  }
+  const panel = panels.value.find(p => p.id === panelId)
+  if (panel) {
+    panel.path = path
+    panel.zoom = 1
+    panel.showRaw = false
+  }
+  activePath.value = path
+  saveState()
+}
+
 async function onWebDrop(e: DragEvent) {
   const file = e.dataTransfer?.files[0]
   if (file && (file.name.endsWith('.md') || file.name.endsWith('.markdown'))) {
     const text = await file.text()
     const fakePath = 'file://' + file.name
     fileContents.value[fakePath] = text
-    tabs.value.push({ path: fakePath, name: file.name })
+    if (!tabs.value.find(t => t.path === fakePath)) {
+      tabs.value.push({ path: fakePath, name: file.name, active: true })
+    }
+    const target = panels.value.find(p => !p.path) || panels.value[0]
+    if (target) {
+      target.path = fakePath
+      target.zoom = 1
+      target.showRaw = false
+    }
     activePath.value = fakePath
     saveState()
   }
@@ -212,14 +292,6 @@ function applyTheme(dark: boolean) {
   document.getElementById('md-light')?.toggleAttribute('disabled', dark)
   document.getElementById('md-dark')?.toggleAttribute('disabled', !dark)
 }
-
-function toggleRaw() {
-  showRaw.value = !showRaw.value
-}
-
-function zoomIn() { zoom.value = Math.min(zoom.value + 0.1, 2) }
-function zoomOut() { zoom.value = Math.max(zoom.value - 0.1, 0.5) }
-function resetZoom() { zoom.value = 1 }
 
 onMounted(async () => {
   const mkLink = (id: string, url: string, disabled: boolean) => {
@@ -247,17 +319,33 @@ onMounted(async () => {
   // Restore tabs
   if (pref && Array.isArray(pref.tabs)) {
     for (const p of pref.tabs) {
-      const name = p.split('/').pop() || 'Unknown'
-      tabs.value.push({ path: p, name })
-      try {
-        const text = await window.electronAPI.readFile(p)
-        fileContents.value[p] = text
-      } catch { /* file may have been deleted */ }
+      const path = typeof p === 'string' ? p : p.path
+      const active = typeof p === 'string' ? true : p.active !== false
+      const name = path.split('/').pop() || 'Unknown'
+      tabs.value.push({ path, name, active })
+      if (active) {
+        try {
+          const text = await window.electronAPI.readFile(path)
+          fileContents.value[path] = text ?? '> Permission denied — unable to read this file.'
+        } catch (e) { console.error('Failed to restore file:', path, e) }
+      }
     }
+    const restoredActive = activeTabs.value
     if (pref.activePath && tabs.value.some(t => t.path === (pref.activePath as string))) {
       activePath.value = pref.activePath as string
-    } else if (tabs.value.length > 0) {
-      activePath.value = tabs.value[0].path
+    } else if (restoredActive.length > 0) {
+      activePath.value = restoredActive[0].path
+    }
+  }
+
+  // Restore panel layout
+  if (pref?.panelLayout) {
+    const pl = pref.panelLayout as PanelLayout
+    gridCols.value = pl.cols
+    gridRows.value = pl.rows
+    panels.value = pl.panels.map(p => ({ ...p }))
+    if (panels.value.length === 0) {
+      panels.value.push({ id: 'p1', path: null, zoom: 1, showRaw: false })
     }
   }
 
@@ -279,14 +367,6 @@ onMounted(async () => {
       await selectFile(filePath)
     }
   } catch { /* no args */ }
-
-  window.addEventListener('keydown', (e) => {
-    if (e.metaKey || e.ctrlKey) {
-      if (e.key === '=' || e.key === '+') { e.preventDefault(); zoomIn() }
-      else if (e.key === '-') { e.preventDefault(); zoomOut() }
-      else if (e.key === '0') { e.preventDefault(); resetZoom() }
-    }
-  })
 
   window.addEventListener('beforeunload', () => {
     saveState()
