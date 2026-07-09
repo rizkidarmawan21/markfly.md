@@ -12,6 +12,10 @@ rendering, toggle raw source, auto-reload on file changes.</p>
 
 ---
 
+<p align="center">
+  <img width="2020" height="1496" alt="Screenshot at Jul 09 19-53-47-modified" src="https://github.com/user-attachments/assets/c3a7317f-60b4-48c9-bab9-a896b728a335" />
+</p>
+
 ## Features
 
 - **macOS file association** — double-click `.md` in Finder opens in Markfly; right-click > Open With works
