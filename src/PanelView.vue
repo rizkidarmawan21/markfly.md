@@ -48,17 +48,6 @@ function onDrop(e: DragEvent) {
     @dragover.prevent
     :data-theme="isDark ? 'dark' : 'light'"
   >
-    <!-- Panel header with filename (VS Code style) -->
-    <div class="panel-header flex items-center h-8 px-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#161b22] select-none shrink-0">
-      <svg v-if="panel.path" class="w-3.5 h-3.5 mr-2 text-indigo-500 dark:text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-      </svg>
-      <svg v-else class="w-3.5 h-3.5 mr-2 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-      </svg>
-      <span class="text-xs font-medium text-gray-600 dark:text-gray-300 truncate">{{ panel.path ? panel.path.split('/').pop() : 'Untitled' }}</span>
-    </div>
-
     <!-- Empty state -->
     <div
       v-if="!panel.path"

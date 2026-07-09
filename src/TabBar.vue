@@ -1,5 +1,5 @@
 <template>
-  <div v-if="tabs.length > 0" class="flex items-center h-9 bg-gray-50 dark:bg-[#161b22] border-b border-gray-200 dark:border-gray-700 overflow-hidden select-none">
+  <div v-if="tabs.length > 0" class="tab-bar flex items-center h-9 bg-gray-50 dark:bg-[#161b22] border-b border-gray-200 dark:border-gray-700 overflow-hidden select-none">
     <div class="flex items-center overflow-x-auto overflow-y-hidden h-full scrollbar-none" ref="tabContainer">
       <div
         v-for="tab in tabs"

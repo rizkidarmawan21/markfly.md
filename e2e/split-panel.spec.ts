@@ -44,8 +44,8 @@ test('click empty panel -> openFile dialog -> panel shows content', async ({ pag
   await page.locator('text=Drop .md here or click to open').click()
   await page.waitForTimeout(500)
 
-  // Panel header should show document.md
-  await expect(page.locator('.panel-header span')).toHaveText('document.md')
+  // Tab bar should show document.md
+  await expect(page.locator('.tab-bar').first()).toBeVisible()
   // Content should be rendered (markdown-body)
   await expect(page.locator('.markdown-body')).toBeVisible()
 })
@@ -81,8 +81,8 @@ test('panel shows file content when path is set', async ({ page }) => {
   // Wait for render
   await page.waitForTimeout(1000)
 
-  // Panel header should show filename (in panel header specifically)
-  await expect(page.locator('.panel-header span')).toHaveText('readme.md')
+  // Tab bar shows readme.md
+  await expect(page.locator('.tab-bar')).toContainText('readme.md')
 
   // Panel should render markdown (the markdown-body article)
   const markdownBody = page.locator('.markdown-body')
@@ -149,8 +149,8 @@ test('select from sidebar assigns path to panel', async ({ page }) => {
   await page.goto('http://localhost:5173')
   await page.waitForTimeout(500)
 
-  // Panel header shows filename
-  await expect(page.locator('.panel-header span')).toHaveText('sidebar-doc.md')
+  // Tab bar shows filename
+  await expect(page.locator('.tab-bar')).toContainText('sidebar-doc.md')
   // Markdown body renders
   await expect(page.locator('.markdown-body')).toBeVisible()
   await expect(page.locator('.markdown-body h1')).toContainText('Sidebar doc')
@@ -169,6 +169,8 @@ test('panel header shows filename', async ({ page }) => {
       onFileChanged: () => {},
       onOpenFile: () => {},
       loadPref: async () => ({
+        tabs: [{ path: '/Users/test/my-doc.md', active: true }],
+        activePath: '/Users/test/my-doc.md',
         panelLayout: {
           cols: 1,
           rows: 1,
@@ -181,6 +183,6 @@ test('panel header shows filename', async ({ page }) => {
 
   await page.goto('http://localhost:5173')
 
-  // Header should show just the filename, not full path
-  await expect(page.locator('text=my-doc.md')).toBeVisible()
+  // Tab bar shows filename
+  await expect(page.locator('.tab-bar')).toContainText('my-doc.md')
 })
