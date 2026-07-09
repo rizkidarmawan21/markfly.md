@@ -79,7 +79,7 @@ function openFile(filePath) {
 // --- IPC handlers ---
 function setupIPC() {
   ipcMain.handle('read-file', async (_event, filePath) => {
-    return fs.readFileSync(filePath, 'utf-8')
+    try { return fs.readFileSync(filePath, 'utf-8') } catch { return null }
   })
 
   ipcMain.handle('watch-file', async (_event, filePath) => {

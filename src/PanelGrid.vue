@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import PanelView from './PanelView.vue'
-import SplitToolbar from './SplitToolbar.vue'
 
 const props = defineProps<{
   panels: Panel[]
@@ -12,37 +10,11 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  updatePanel: [id: string, partial: Partial<Panel>]
   split: [dir: 'h' | 'v' | '2x2']
   closePanel: []
-  closeAll: []
   selectFile: [panelId: string]
   dropFile: [panelId: string, path: string, data: string]
 }>()
-
-const resizing = ref<{ axis: 'col' | 'row'; index: number; start: number; size: number } | null>(null)
-
-// Resize: overlay strips
-function startResize(e: MouseEvent, axis: 'col' | 'row', index: number) {
-  const container = (e.currentTarget as HTMLElement).parentElement!
-  const rect = container.getBoundingClientRect()
-  const size = axis === 'col' ? rect.width : rect.height
-  resizing.value = { axis, index, start: e[axis === 'col' ? 'clientX' : 'clientY'], size }
-  document.addEventListener('mousemove', onMove)
-  document.addEventListener('mouseup', onUp)
-}
-
-function onMove(e: MouseEvent) {
-  if (!resizing.value) return
-  // we just need cursor feedback; actual grid resize via CSS is handled
-  // by the overlay visuals. The grid uses flex:1 so no explicit sizing needed.
-}
-
-function onUp() {
-  resizing.value = null
-  document.removeEventListener('mousemove', onMove)
-  document.removeEventListener('mouseup', onUp)
-}
 
 function onPanelDrop(panelId: string, path: string, data: string) {
   emit('dropFile', panelId, path, data)
@@ -86,22 +58,7 @@ function getContent(panel: Panel): string {
             @dropFile="onPanelDrop"
           />
         </div>
-        <!-- Column resize handle (after each panel except last in row) -->
-        <div
-          v-if="(i + 1) % cols !== 0"
-          class="absolute top-0 bottom-0 w-1 cursor-col-resize z-20 hover:bg-indigo-400/40 active:bg-indigo-400/60 transition-colors"
-          :style="{ left: `${((i % cols) + 1) / cols * 100}%` }"
-          @mousedown.prevent="startResize($event, 'col', i % cols)"
-        ></div>
       </template>
     </div>
-
-    <!-- Toolbar -->
-    <SplitToolbar
-      :panelCount="panels.length"
-      @split="emit('split', $event)"
-      @closePanel="emit('closePanel')"
-      @closeAll="emit('closeAll')"
-    />
   </div>
 </template>
