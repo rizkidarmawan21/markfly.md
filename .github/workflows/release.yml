@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: macos-latest
@@ -25,7 +28,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Markfly-${{ github.run_number }}
-          path: release/*.{dmg,pkg,zip}
+          path: release/
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
