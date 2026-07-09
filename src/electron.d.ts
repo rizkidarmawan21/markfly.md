@@ -1,6 +1,7 @@
 interface TabItem {
   path: string
   name: string
+  active?: boolean
 }
 
 interface ElectronAPI {

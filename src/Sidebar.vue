@@ -15,7 +15,9 @@
         v-for="tab in tabs"
         :key="tab.path"
         @click="$emit('select', tab.path)"
-        class="flex items-start gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors select-none"
+        @dragstart="onDragStart($event, tab.path)"
+        draggable="true"
+        class="group flex items-start gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors select-none"
         :class="tab.path === activePath
           ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
           : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'"
@@ -27,6 +29,15 @@
           <div class="text-xs font-medium truncate">{{ tab.name }}</div>
           <div class="text-[11px] text-gray-400 dark:text-gray-500 truncate mt-0.5">{{ displayPath(tab.path) }}</div>
         </div>
+        <button
+          @click.stop="$emit('close', tab.path)"
+          class="p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 dark:hover:text-red-400 flex-shrink-0 transition-colors opacity-0 group-hover:opacity-100"
+          title="Remove from history"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
     </div>
     <!-- Resize handle -->
@@ -48,6 +59,7 @@ defineProps<{
 const emit = defineEmits<{
   select: [path: string]
   'update:width': [width: number]
+  close: [path: string]
 }>()
 
 function startResize(e: MouseEvent) {
@@ -63,6 +75,10 @@ function startResize(e: MouseEvent) {
   }
   document.addEventListener('mousemove', onMove)
   document.addEventListener('mouseup', onUp)
+}
+
+function onDragStart(e: DragEvent, path: string) {
+  e.dataTransfer?.setData('text/plain', path)
 }
 
 function displayPath(p: string): string {
