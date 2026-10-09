@@ -28,7 +28,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Markfly-${{ github.ref_name }}
-          path: release/*.{dmg,pkg,zip}
+          path: |
+            release/*.dmg
+            release/*.pkg
+            release/*.zip
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -36,4 +39,7 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: Markfly ${{ github.ref_name }}
           draft: false
-          files: release/*.{dmg,pkg,zip}
+          files: |
+            release/*.dmg
+            release/*.pkg
+            release/*.zip
