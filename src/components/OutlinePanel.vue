@@ -1,7 +1,7 @@
 <template>
-  <aside class="w-80 max-w-[40vw] shrink-0 border-l border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0d1117] flex flex-col overflow-hidden">
+  <aside class="outline-panel w-80 max-w-[40vw] shrink-0 border-l border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#181715] flex flex-col overflow-hidden">
     <header class="h-11 shrink-0 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
-      <h2 class="text-xs font-semibold tracking-wide text-gray-500 dark:text-gray-400">OUTLINE</h2>
+      <h2 class="text-xs font-semibold tracking-wide text-gray-500 dark:text-gray-400">Outline</h2>
       <button @click="$emit('close')" title="Close outline" aria-label="Close outline" class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-800 cursor-pointer">
         <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>
       </button>

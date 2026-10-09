@@ -1,6 +1,6 @@
 <template>
-  <div class="h-screen flex flex-col bg-white dark:bg-[#0d1117] text-gray-900 dark:text-[#c9d1d9] overflow-hidden font-sans transition-colors duration-200">
-    <header class="h-12 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 bg-gray-50/80 dark:bg-[#161b22]/80 backdrop-blur-sm select-none z-10">
+  <div class="app-shell h-screen flex flex-col bg-white dark:bg-[#181715] text-gray-900 dark:text-[#faf9f5] overflow-hidden font-sans transition-colors duration-200">
+    <header class="app-topbar h-12 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 bg-gray-50/80 dark:bg-[#252320]/80 backdrop-blur-sm select-none z-10">
       <div class="flex items-center space-x-2">
         <button @click="toggleSidebar" title="Toggle Sidebar" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer">
           <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,7 +44,7 @@
           @close="closeTab"
         />
 
-        <div v-if="activePath" class="h-10 shrink-0 flex items-center justify-end gap-1 px-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0d1117] select-none">
+        <div v-if="activePath" class="app-toolbar h-10 shrink-0 flex items-center justify-end gap-1 px-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#181715] select-none">
           <button @click="handleTabAction(activePath, 'search')" title="Find in Document (⌘F)" aria-label="Find in Document" class="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer">
             <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="m16 16 5 5"/></svg>
           </button>
@@ -69,7 +69,7 @@
           </button>
         </div>
 
-        <div v-if="searchOpen && activePath" class="h-12 shrink-0 flex items-center justify-end gap-2 px-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0d1117]">
+        <div v-if="searchOpen && activePath" class="app-search h-12 shrink-0 flex items-center justify-end gap-2 px-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#181715]">
           <input
             ref="searchInput"
             v-model="searchQuery"
@@ -100,16 +100,17 @@
         </div>
 
         <!-- Preview area -->
-        <div v-else class="flex-1 min-h-0 flex overflow-hidden">
-          <div ref="documentEl" class="flex-1 min-w-0 bg-white dark:bg-[#0d1117] transition-colors duration-200 markdown-scroll" :data-theme="isDark ? 'dark' : 'light'">
+        <div v-else class="app-document-layout flex-1 min-h-0 flex overflow-hidden">
+          <div ref="documentEl" class="flex-1 min-w-0 bg-white dark:bg-[#181715] transition-colors duration-200 markdown-scroll" :data-theme="isDark ? 'dark' : 'light'">
             <div v-if="showRaw" class="h-full p-4 overflow-auto">
-              <pre class="text-sm font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-all">{{ fileContents[activePath] || '' }}</pre>
+              <pre class="raw-markdown text-sm font-mono whitespace-pre-wrap break-all">{{ fileContents[activePath] || '' }}</pre>
             </div>
             <article
               v-else
               ref="articleEl"
               class="markdown-body"
               :style="{ fontSize: `${activeZoom * 100}%` }"
+              @click="onArticleClick"
               v-html="rendered">
             </article>
           </div>
@@ -124,14 +125,14 @@
       </div>
     </main>
 
-    <div v-if="copyStatus" role="status" class="fixed bottom-5 right-5 z-40 rounded-lg bg-gray-900 px-4 py-2 text-sm text-white shadow-lg dark:bg-gray-100 dark:text-gray-900">
+    <div v-if="copyStatus" role="status" class="app-toast fixed bottom-5 right-5 z-40 rounded-lg bg-gray-900 px-4 py-2 text-sm text-white shadow-lg dark:bg-gray-100 dark:text-gray-900">
       {{ copyStatus }}
     </div>
 
     <div v-if="urlImportOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.esc.stop="closeUrlImport">
       <button class="absolute inset-0 bg-black/25 backdrop-blur-sm cursor-default" aria-label="Close URL import dialog" @click="closeUrlImport"></button>
       <form
-        class="relative w-full max-w-md rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#161b22] p-5 shadow-xl"
+        class="app-dialog relative w-full max-w-md rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#252320] p-5 shadow-xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="url-import-title"
@@ -256,6 +257,8 @@ let renderedHeadingIndex = 0
 let mermaidSources: string[] = []
 let mermaidRenderVersion = 0
 let mermaidRenderQueue = Promise.resolve()
+type MermaidMode = 'diagram' | 'code' | 'split'
+const mermaidModes = new Map<string, MermaidMode>()
 marked.use(markedKatex({ throwOnError: false }))
 markdownRenderer.heading = ({ depth, text }) => {
   const id = `markfly-heading-${renderedHeadingIndex++}`
@@ -266,7 +269,14 @@ markdownRenderer.code = ({ text, lang }) => {
   if (language === 'mermaid') {
     const sourceIndex = mermaidSources.push(text) - 1
     const source = escapeHtml(text)
-    return `<pre class="mermaid" data-mermaid-index="${sourceIndex}">${source}</pre>\n`
+    return `<section class="mermaid-block" data-mermaid-index="${sourceIndex}" data-mode="diagram">
+      <div class="mermaid-toolbar"><span class="mermaid-label">Mermaid</span><div class="mermaid-view-options" role="group" aria-label="Mermaid view">
+        <button type="button" data-mermaid-mode="diagram" aria-pressed="true">Diagram</button>
+        <button type="button" data-mermaid-mode="code" aria-pressed="false">Code</button>
+        <button type="button" data-mermaid-mode="split" aria-pressed="false">Diagram + Code</button>
+      </div></div>
+      <div class="mermaid-content"><div class="mermaid-diagram"><pre class="mermaid" data-mermaid-index="${sourceIndex}">${source}</pre></div><pre class="mermaid-code"><code>${source}</code></pre></div>
+    </section>\n`
   }
 
   const hasLanguage = Boolean(language && hljs.getLanguage(language))
@@ -289,6 +299,27 @@ const rendered = computed(() => {
   }) as string
   return DOMPurify.sanitize(html)
 })
+
+function applyMermaidModes(article: HTMLElement) {
+  article.querySelectorAll<HTMLElement>('.mermaid-block').forEach(block => {
+    const index = Number(block.dataset.mermaidIndex)
+    const mode = mermaidModes.get(`${activePath.value}:${index}`) ?? 'diagram'
+    block.dataset.mode = mode
+    block.querySelectorAll<HTMLButtonElement>('[data-mermaid-mode]').forEach(button => {
+      button.setAttribute('aria-pressed', String(button.dataset.mermaidMode === mode))
+    })
+  })
+}
+
+function onArticleClick(event: MouseEvent) {
+  if (!(event.target instanceof Element)) return
+  const button = event.target.closest<HTMLButtonElement>('[data-mermaid-mode]')
+  const block = button?.closest<HTMLElement>('.mermaid-block')
+  const mode = button?.dataset.mermaidMode
+  if (!block || !activePath.value || (mode !== 'diagram' && mode !== 'code' && mode !== 'split')) return
+  mermaidModes.set(`${activePath.value}:${Number(block.dataset.mermaidIndex)}`, mode)
+  if (articleEl.value) applyMermaidModes(articleEl.value)
+}
 
 const outlineHeadings = computed(() => {
   const content = activePath.value ? fileContents.value[activePath.value] || '' : ''
@@ -430,27 +461,64 @@ watch([searchQuery, rendered, activePath, showRaw, searchOpen], async () => {
   refreshSearch()
 }, { flush: 'post' })
 
-watch([rendered, isDark], async () => {
+watch([rendered, isDark, showRaw], async ([html, dark, raw], [previousHtml, previousDark]) => {
   const version = ++mermaidRenderVersion
   const sources = [...mermaidSources]
   await nextTick()
   mermaidRenderQueue = mermaidRenderQueue.then(async () => {
     if (version !== mermaidRenderVersion) return
-    const nodes = articleEl.value?.querySelectorAll<HTMLElement>('.mermaid')
-    if (!nodes?.length) return
-    nodes.forEach(node => {
-      const sourceIndex = Number(node.dataset.mermaidIndex)
-      const source = sources[sourceIndex]
-      if (source !== undefined) node.textContent = source
-      node.removeAttribute('data-processed')
-    })
+    const article = articleEl.value
+    if (raw || !article) return
+
+    if (dark !== previousDark && html === previousHtml) {
+      const scrollTop = documentEl.value?.scrollTop ?? 0
+      article.innerHTML = html
+      documentEl.value?.scrollTo({ top: scrollTop })
+    }
+
+    applyMermaidModes(article)
+    const nodes = article.querySelectorAll<HTMLElement>('.mermaid-block pre.mermaid')
+    if (!nodes.length) return
     const { default: mermaid } = await import('mermaid')
     if (version !== mermaidRenderVersion) return
-    mermaid.initialize({ startOnLoad: false, theme: isDark.value ? 'dark' : 'default', securityLevel: 'strict' })
-    try {
-      await mermaid.run({ nodes: Array.from(nodes) })
-    } catch (error) {
-      console.error('Mermaid render error:', error)
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'base',
+      securityLevel: 'strict',
+      themeVariables: dark ? {
+        background: '#252320', primaryColor: '#3a2922', primaryTextColor: '#faf9f5',
+        primaryBorderColor: '#d68a6d', lineColor: '#c2bcb2', textColor: '#ded9cf',
+        secondaryColor: '#393631', tertiaryColor: '#252320',
+        actorBkg: '#3a2922', actorBorder: '#d68a6d', actorTextColor: '#faf9f5',
+        signalColor: '#c2bcb2', signalTextColor: '#ded9cf',
+        labelBoxBkgColor: '#252320', labelTextColor: '#ded9cf',
+      } : {
+        background: '#f5f0e8', primaryColor: '#f4e5dc', primaryTextColor: '#141413',
+        primaryBorderColor: '#cc785c', lineColor: '#6c6a64', textColor: '#3d3d3a',
+        secondaryColor: '#efe9de', tertiaryColor: '#faf9f5',
+        actorBkg: '#f4e5dc', actorBorder: '#cc785c', actorTextColor: '#141413',
+        signalColor: '#6c6a64', signalTextColor: '#3d3d3a',
+        labelBoxBkgColor: '#faf9f5', labelTextColor: '#3d3d3a',
+      },
+    })
+    for (const node of nodes) {
+      if (version !== mermaidRenderVersion) return
+      const index = Number(node.dataset.mermaidIndex)
+      const source = sources[index]
+      if (source === undefined) continue
+      node.textContent = source
+      try {
+        await mermaid.run({ nodes: [node] })
+      } catch (error) {
+        console.error('Mermaid render error:', error)
+        const block = node.closest<HTMLElement>('.mermaid-block')
+        if (block) {
+          block.dataset.mode = 'code'
+          block.querySelectorAll<HTMLButtonElement>('[data-mermaid-mode]').forEach(button => {
+            button.setAttribute('aria-pressed', String(button.dataset.mermaidMode === 'code'))
+          })
+        }
+      }
     }
   }).catch(error => {
     console.error('Mermaid render error:', error)

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="tabs.length > 0" class="tab-bar flex items-center h-9 bg-gray-50 dark:bg-[#161b22] border-b border-gray-200 dark:border-gray-700 overflow-hidden select-none">
+  <div v-if="tabs.length > 0" class="tab-bar flex items-center h-9 bg-gray-50 dark:bg-[#252320] border-b border-gray-200 dark:border-gray-700 overflow-hidden select-none">
     <div class="flex items-center overflow-x-auto overflow-y-hidden h-full scrollbar-none" ref="tabContainer">
       <div
         v-for="tab in tabs"
@@ -8,7 +8,7 @@
         :ref="el => { if (tab.path === activePath && el) tabRefs[tab.path] = el as HTMLElement }"
         class="group flex items-center gap-1.5 px-3 h-full text-sm cursor-pointer border-r border-gray-200 dark:border-gray-700 whitespace-nowrap transition-colors shrink-0 max-w-[180px]"
         :class="tab.path === activePath
-          ? 'bg-white dark:bg-[#0d1117] border-b-2 border-b-indigo-500 text-gray-900 dark:text-gray-100'
+          ? 'bg-white dark:bg-[#181715] border-b-2 border-b-indigo-500 text-gray-900 dark:text-gray-100'
           : 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400'"
       >
         <span class="truncate min-w-0">{{ tab.name }}</span>
