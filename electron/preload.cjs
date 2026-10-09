@@ -1,9 +1,13 @@
-const { contextBridge, ipcRenderer } = require('electron')
+const { contextBridge, ipcRenderer, webUtils } = require('electron')
 
 contextBridge.exposeInMainWorld('electronAPI', {
   readFile: (path) => ipcRenderer.invoke('read-file', path),
+  copyText: (text) => ipcRenderer.invoke('copy-text', text),
+  fetchMarkdownUrl: (url) => ipcRenderer.invoke('fetch-markdown-url', url),
   watchFile: (path) => ipcRenderer.invoke('watch-file', path),
   getArgs: () => ipcRenderer.invoke('get-args'),
+  rendererReady: () => ipcRenderer.invoke('renderer-ready'),
+  getPathForFile: (file) => webUtils.getPathForFile(file),
   getTheme: () => ipcRenderer.invoke('get-theme'),
   openFileDialog: () => ipcRenderer.invoke('open-file-dialog'),
   openFilePath: (path) => ipcRenderer.invoke('open-file-path', path),

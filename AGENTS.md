@@ -7,11 +7,13 @@ Minimal macOS markdown viewer. Open `.md` files from Finder, preview with GitHub
 ## Features
 
 - macOS file association — double-click `.md` opens in Markfly; right-click > Open With
-- GitHub-themed rendered preview (light & dark), syntax-highlighted code blocks
+- GitHub-themed rendered preview (light & dark), GFM, syntax-highlighted code blocks, Mermaid diagrams, and LaTeX math
 - Raw source toggle (toolbar button)
+- Document search (Cmd+F, case-insensitive matches, next/previous navigation)
 - Auto-reload on file changes (chokidar watcher)
 - Dark/light theme (follows system, persisted per session toggle)
 - Zoom controls (Cmd± / Cmd+0, toolbar buttons)
+- Find in active document (Cmd+F, Enter / Shift+Enter, Esc)
 - Drag & drop `.md` files
 - Recent files (macOS Open Recent menu)
 
@@ -25,6 +27,8 @@ Minimal macOS markdown viewer. Open `.md` files from Finder, preview with GitHub
 | CSS | Tailwind CSS v4 |
 | Markdown renderer | marked v18 |
 | Syntax highlight | highlight.js |
+| Diagrams | Mermaid |
+| Math | KaTeX via marked-katex-extension |
 | Theme stylesheet | github-markdown-css v5 |
 | Packaging | electron-builder v26 |
 | File watcher | chokidar |
@@ -67,10 +71,11 @@ Minimal macOS markdown viewer. Open `.md` files from Finder, preview with GitHub
 
 ### Key flows
 
-1. **Open file from Finder:** macOS `open-file` event → main process queues path → `createWindow` → renderer `onMounted` calls `getArgs` → loads file content → renders via `marked`
+1. **Open file from Finder:** macOS `open-file` event → main process queues path until renderer signals `rendererReady` → renderer loads file content → renders via `marked`
 2. **Open via dialog:** renderer `openFile()` → IPC `open-file-dialog` → main shows dialog → returns path → renderer reads + renders
 3. **File watch:** after loading, main calls `chokidar.watch(path)` → on change → IPC `file-changed` → renderer reloads content
-4. **Theme toggle:** renderer toggles `isDark` ref → toggles `.dark` class + hljs/md stylesheets → persists via IPC `savePref` to `userData/prefs.json`
+4. **Drag and drop:** renderer asks preload `webUtils.getPathForFile(file)` for the real path → loads through `readFile` → saves that path for session restore
+5. **Theme toggle:** renderer toggles `isDark` ref → toggles `.dark` class + hljs/md stylesheets → persists via IPC `savePref` to `userData/prefs.json`
 
 ## IPC API (window.electronAPI)
 
@@ -78,7 +83,9 @@ Minimal macOS markdown viewer. Open `.md` files from Finder, preview with GitHub
 |--------|------|-------------|
 | `readFile(path)` | `Promise<string>` | Read file contents |
 | `watchFile(path)` | `Promise<void>` | Start watching file for changes |
-| `getArgs()` | `Promise<string\|null>` | Get file path from CLI args or pending open-file |
+| `getArgs()` | `Promise<string\|null>` | Get file path from CLI args |
+| `rendererReady()` | `Promise<void>` | Flush queued Finder open events after renderer listeners are ready |
+| `getPathForFile(file)` | `string` | Get real path for a native dropped file |
 | `getTheme()` | `Promise<'light'\|'dark'>` | Get native theme |
 | `openFileDialog()` | `Promise<string\|null>` | Show native open dialog |
 | `openFilePath(path)` | `Promise<boolean>` | Add path to recent files |
@@ -161,7 +168,7 @@ Build config in `electron-builder.yml`. Key settings:
 ## Best Practices
 
 - **No global state:** single Vue root, no Pinia/Vuex
-- **Minimal deps:** only `chokidar` in `dependencies` (runtime); everything else devDeps (Vite-bundled)
+- **Runtime deps:** `chokidar`, `mermaid`, `katex`, and `marked-katex-extension`
 - **YAGNI:** no router, no test framework, no store — add only when needed
 - **Theme persistence:** JSON in `userData/prefs.json` — no `electron-store` dep
 - **File watcher:** single chokidar instance, cleaned between files

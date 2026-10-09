@@ -38,6 +38,113 @@ html, body, #app {
   padding: 45px;
 }
 
+.markdown-scroll[data-theme="dark"] .markdown-body {
+  color-scheme: dark;
+  color: #c9d1d9;
+  background-color: #0d1117;
+}
+
+.markdown-scroll[data-theme="dark"] .markdown-body h1,
+.markdown-scroll[data-theme="dark"] .markdown-body h2,
+.markdown-scroll[data-theme="dark"] .markdown-body h3,
+.markdown-scroll[data-theme="dark"] .markdown-body h4,
+.markdown-scroll[data-theme="dark"] .markdown-body h5,
+.markdown-scroll[data-theme="dark"] .markdown-body h6 {
+  border-bottom-color: #3d444d;
+}
+
+.markdown-scroll[data-theme="dark"] .markdown-body table th,
+.markdown-scroll[data-theme="dark"] .markdown-body table td {
+  border-color: #3d444d;
+}
+
+.markdown-scroll[data-theme="dark"] .markdown-body table tr {
+  background-color: #0d1117;
+  border-top-color: #3d444d;
+}
+
+.markdown-scroll[data-theme="dark"] .markdown-body table tr:nth-child(2n) {
+  background-color: #151b23;
+}
+
+.markdown-scroll[data-theme="dark"] .markdown-body pre,
+.markdown-scroll[data-theme="dark"] .markdown-body :not(pre) > code {
+  background-color: #151b23;
+}
+
+.markdown-scroll[data-theme="dark"] .markdown-body pre code {
+  color: #c9d1d9;
+}
+
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-doctag,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-keyword,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-meta .hljs-keyword,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-template-tag,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-template-variable,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-type,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-variable.language_ {
+  color: #ff7b72;
+}
+
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-title,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-title.class_,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-title.function_ {
+  color: #d2a8ff;
+}
+
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-attr,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-attribute,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-literal,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-meta,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-number,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-operator,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-variable,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-selector-attr,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-selector-class,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-selector-id {
+  color: #79c0ff;
+}
+
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-regexp,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-string,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-meta .hljs-string {
+  color: #a5d6ff;
+}
+
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-built_in,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-symbol {
+  color: #ffa657;
+}
+
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-comment,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-code,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-formula {
+  color: #8b949e;
+}
+
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-name,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-quote,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-selector-tag,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-selector-pseudo {
+  color: #7ee787;
+}
+
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-subst,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-emphasis,
+.markdown-scroll[data-theme="dark"] .markdown-body pre code .hljs-strong {
+  color: #c9d1d9;
+}
+
+.markdown-scroll[data-theme="dark"] .markdown-body blockquote {
+  color: #9198a1;
+  border-left-color: #3d444d;
+}
+
+.markdown-scroll[data-theme="dark"] .markdown-body hr {
+  background-color: #3d444d;
+  border-color: #3d444d;
+}
+
 /* Tables: horizontal scroll instead of clipping */
 .markdown-body table {
   display: block;
@@ -46,11 +153,34 @@ html, body, #app {
   white-space: nowrap;
 }
 
-/* Code blocks: word-break */
-.markdown-body pre,
-.markdown-body code {
+.markdown-body pre {
+  overflow-x: auto;
+}
+
+.markdown-body pre code {
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.markdown-body :not(pre) > code {
   word-break: break-word;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+.markdown-body .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0;
+}
+
+::highlight(markfly-search) {
+  background-color: #ffe56b;
+  color: #111827;
+}
+
+::highlight(markfly-search-active) {
+  background-color: #fb923c;
+  color: #111827;
 }
 
 /* ponytail: force native list markers — github-markdown-css v5 overrides

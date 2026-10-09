@@ -19,12 +19,13 @@ rendering, toggle raw source, auto-reload on file changes.</p>
 ## Features
 
 - **macOS file association** — double-click `.md` in Finder opens in Markfly; right-click > Open With works
-- **Rendered preview** — GitHub-themed markdown (light & dark), syntax-highlighted code blocks
+- **Rendered preview** — GFM tables, task lists, strikethrough, highlighted code blocks, Mermaid diagrams, and LaTeX math
 - **Raw source toggle** — switch between rendered HTML and plain markdown
 - **Auto-reload** — watcher re-reads file on disk changes
 - **Dark / light theme** — follows system preference, toggle via toolbar
 - **Zoom controls** — pinch via Cmd±/Cmd+0, or toolbar buttons
-- **Drag & drop** — drop `.md` files onto the window
+- **Document search** — Cmd+F, highlight matches, move with Enter / Shift+Enter
+- **Drag & drop** — drop `.md` files onto the window; original file path stays available after restart
 - **Recent files** — macOS Open Recent menu and system recents
 
 ## Install
@@ -68,6 +69,8 @@ Output in `release/` — `.dmg`, `.pkg`, and `.zip`.
 | CSS               | [Tailwind CSS v4](https://tailwindcss.com/)                                 |
 | Markdown renderer | [marked](https://marked.js.org/) v18                                        |
 | Syntax highlight  | [highlight.js](https://highlightjs.org/)                                    |
+| Diagrams          | [Mermaid](https://mermaid.js.org/)                                          |
+| Math              | [KaTeX](https://katex.org/)                                                 |
 | Theme stylesheet  | [github-markdown-css](https://github.com/sindresorhus/github-markdown-css)  |
 | Packaging         | [electron-builder](https://www.electron.build/)                             |
 | File watcher      | [chokidar](https://github.com/paulmillr/chokidar)                           |
