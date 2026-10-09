@@ -2,7 +2,10 @@
 
 <!-- ICON: insert image/icon link here -->
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/5f81ede5-a77c-4613-9c16-a495f9319b3f" alt="Markfly" width="96" height="96">
+  <!-- <img src="https://github.com/user-attachments/assets/5f81ede5-a77c-4613-9c16-a495f9319b3f" alt="Markfly" width="96" height="96"> -->
+  <!-- <img width="100" alt="Minimalist Four-Petal Butterfly Emblem" src="https://github.com/user-attachments/assets/d240ba35-cdc8-40ce-a052-d272d7124db4" /> -->
+  <img width="500" alt="Minimal markfly md Logo Banner-modified" src="https://github.com/user-attachments/assets/4161df39-b35d-40b7-a622-ad344204c008" />
+
 </p>
 
 <p align="center"><strong>Minimal, native macOS markdown viewer.</strong></
