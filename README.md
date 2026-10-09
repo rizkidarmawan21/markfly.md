@@ -13,7 +13,10 @@ rendering, toggle raw source, auto-reload on file changes.</p>
 ---
 
 <p align="center">
-  <img width="1020" alt="Screenshot at Jul 09 19-53-47-modified" src="https://github.com/user-attachments/assets/c3a7317f-60b4-48c9-bab9-a896b728a335" />
+  <!-- <img width="1619" height="1022" alt="Screenshot at Oct 10 00-22-18" src="https://github.com/user-attachments/assets/292d4e05-2f3c-421c-b0cd-ae2191639876" /> -->
+
+ <!--  <img width="1020" alt="Screenshot at Jul 09 19-53-47-modified" src="https://github.com/user-attachments/assets/c3a7317f-60b4-48c9-bab9-a896b728a335" />  -->
+  <img width="1020" alt="Screenshot at Jul 09 19-53-47-modified" src="https://github.com/user-attachments/assets/292d4e05-2f3c-421c-b0cd-ae2191639876" />
 </p>
 
 ## Features
