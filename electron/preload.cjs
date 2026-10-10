@@ -7,7 +7,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   watchFile: (path) => ipcRenderer.invoke('watch-file', path),
   getArgs: () => ipcRenderer.invoke('get-args'),
   rendererReady: () => ipcRenderer.invoke('renderer-ready'),
-  getPathForFile: (file) => webUtils.getPathForFile(file),
+  openDroppedFile: (file) => {
+    const path = webUtils.getPathForFile(file)
+    return ipcRenderer.invoke('open-dropped-file', path)
+  },
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
   getTheme: () => ipcRenderer.invoke('get-theme'),
   openFileDialog: () => ipcRenderer.invoke('open-file-dialog'),
   openFilePath: (path) => ipcRenderer.invoke('open-file-path', path),
