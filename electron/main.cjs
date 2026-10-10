@@ -18,7 +18,7 @@ let watcher = null
 let pendingOpenFiles = []
 let rendererReady = false
 const RECENT_MAX = 10
-const DEV_ORIGIN = 'http://localhost:5173'
+const DEV_ORIGIN = process.env.MARKFLY_DEV_ORIGIN || 'http://localhost:5173'
 let recentFiles = []
 const authorizedFiles = new AuthorizedFiles()
 
