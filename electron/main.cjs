@@ -310,12 +310,13 @@ function setupIPC() {
 // --- Window ---
 function createWindow() {
   const isDev = !app.isPackaged
+  const appTitle = `Markfly v${app.getVersion()}`
   mainWin = new BrowserWindow({
     width: 900,
     height: 700,
     minWidth: 500,
     minHeight: 400,
-    title: 'Markfly',
+    title: appTitle,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -324,6 +325,11 @@ function createWindow() {
       webviewTag: false,
       navigateOnDragDrop: false,
     },
+  })
+
+  mainWin.webContents.on('page-title-updated', (event) => {
+    event.preventDefault()
+    mainWin.setTitle(appTitle)
   })
 
   mainWin.webContents.on('will-navigate', (event, url) => {
