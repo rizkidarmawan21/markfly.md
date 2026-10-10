@@ -28,11 +28,16 @@
         :activePath="activePath"
         :width="sidebarWidth"
         :visible="sidebarVisible"
+        :updateState="updateState"
         @select="selectFile"
         @update:width="w => sidebarWidth = w"
         @close="removeTab"
         @import-markdown="openFile"
         @import-url="openUrlImport"
+        @check-updates="checkForUpdates"
+        @download-update="downloadUpdate"
+        @open-update-installer="openUpdateInstaller"
+        @open-release-info="openUpdateRelease"
       />
 
       <!-- Content area -->
@@ -221,6 +226,16 @@ const showRaw = computed(() => activeView.value?.showRaw ?? false)
 const outlineOpen = ref(false)
 const sidebarVisible = ref(true)
 const sidebarWidth = ref(260)
+const updateState = ref<UpdateState>({
+  revision: 0,
+  status: 'idle',
+  currentVersion: '',
+  latestVersion: null,
+  releaseInfoAvailable: false,
+  bytesReceived: 0,
+  totalBytes: null,
+  error: null,
+})
 const urlImporting = ref(false)
 const urlImportError = ref<string | null>(null)
 const urlImportOpen = ref(false)
@@ -236,6 +251,33 @@ const searchIndex = ref(0)
 const copyStatus = ref('')
 let searchRanges: Range[] = []
 let copyStatusTimer: ReturnType<typeof setTimeout> | undefined
+let removeUpdateStateListener: (() => void) | null = null
+
+function applyUpdateState(next: UpdateState) {
+  if (next.revision >= updateState.value.revision) updateState.value = next
+}
+
+async function checkForUpdates() {
+  applyUpdateState(await window.electronAPI.checkForUpdates())
+}
+
+async function downloadUpdate() {
+  applyUpdateState(await window.electronAPI.downloadUpdate())
+}
+
+async function openUpdateInstaller() {
+  applyUpdateState(await window.electronAPI.openUpdateInstaller())
+}
+
+async function openUpdateRelease() {
+  try {
+    await window.electronAPI.openUpdateRelease()
+  } catch {
+    copyStatus.value = 'Could not open GitHub release page'
+    if (copyStatusTimer) clearTimeout(copyStatusTimer)
+    copyStatusTimer = setTimeout(() => { copyStatus.value = '' }, 2500)
+  }
+}
 
 type HighlightRegistryApi = {
   set(name: string, highlight: unknown): void
@@ -719,6 +761,8 @@ function applyTheme(dark: boolean) {
 
 onMounted(async () => {
   window.addEventListener('keydown', handleGlobalKeydown)
+  removeUpdateStateListener = window.electronAPI.onUpdateState(applyUpdateState)
+  try { applyUpdateState(await window.electronAPI.getUpdateState()) } catch { /* updater state unavailable */ }
   const mkLink = (id: string, url: string, disabled: boolean) => {
     const link = document.createElement('link')
     link.id = id
@@ -797,6 +841,8 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
+  removeUpdateStateListener?.()
+  removeUpdateStateListener = null
   clearSearchHighlights()
 })
 </script>

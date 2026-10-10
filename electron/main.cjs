@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, nativeTheme, Menu, dialog, clipboard, shell
 const path = require('path')
 const fs = require('fs')
 const chokidar = require('chokidar')
+const { createUpdateService } = require('./update-service.cjs')
 const {
   AuthorizedFiles,
   assertMarkdownSize,
@@ -12,11 +13,12 @@ const {
 } = require('./security.cjs')
 
 let mainWin
+let updateService = null
 let watcher = null
 let pendingOpenFiles = []
 let rendererReady = false
 const RECENT_MAX = 10
-const DEV_ORIGIN = 'http://localhost:5173'
+const DEV_ORIGIN = process.env.MARKFLY_DEV_ORIGIN || 'http://localhost:5173'
 let recentFiles = []
 const authorizedFiles = new AuthorizedFiles()
 
@@ -135,6 +137,13 @@ function buildMenu() {
       ],
     },
     { role: 'editMenu' },
+    {
+      label: 'Help',
+      submenu: [{
+        label: 'Check for Updates…',
+        click: () => updateService?.checkForUpdates(),
+      }],
+    },
     { role: 'viewMenu' },
     { role: 'windowMenu' },
   ]
@@ -278,6 +287,12 @@ function setupIPC() {
     return true
   })
 
+  handleTrusted('get-update-state', async () => updateService.getState())
+  handleTrusted('update-check', async () => updateService.checkForUpdates())
+  handleTrusted('update-download', async () => updateService.downloadUpdate())
+  handleTrusted('update-open-installer', async () => updateService.openInstaller())
+  handleTrusted('update-open-release', async () => updateService.openRelease())
+
   handleTrusted('get-recent-files', async () => {
     return [...recentFiles]
   })
@@ -346,9 +361,24 @@ app.on('open-file', (event, filePath) => {
 })
 
 app.whenReady().then(() => {
+  updateService = createUpdateService({
+    currentVersion: app.getVersion(),
+    architecture: process.arch,
+    userDataPath: app.getPath('userData'),
+    openPath: filePath => shell.openPath(filePath),
+    openExternal: url => shell.openExternal(url),
+    publishState: state => {
+      if (mainWin && !mainWin.isDestroyed()) mainWin.webContents.send('update-state', state)
+    },
+  })
   buildMenu()
   setupIPC()
   createWindow()
+  updateService.checkOnStartup().catch(error => console.error('Automatic update check failed:', error))
+})
+
+app.on('before-quit', () => {
+  updateService?.dispose()
 })
 
 app.on('window-all-closed', () => {
