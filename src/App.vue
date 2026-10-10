@@ -198,6 +198,7 @@ import darkHljsUrl from 'highlight.js/styles/github-dark.css?url'
 import Sidebar from './Sidebar.vue'
 import TabBar from './TabBar.vue'
 import OutlinePanel from './components/OutlinePanel.vue'
+import { canRenderMermaid, escapeRawHtml, isSafeImageHref } from './markdown-security'
 
 for (const [name, language] of Object.entries({
   bash, c, cpp, csharp, css, diff, go, java, javascript, json,
@@ -242,16 +243,6 @@ type HighlightRegistryApi = {
 }
 type HighlightConstructor = new (...ranges: Range[]) => unknown
 
-function escapeHtml(value: string) {
-  return value.replace(/[&<>"']/g, char => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  })[char] as string)
-}
-
 const markdownRenderer = new marked.Renderer()
 let renderedHeadingIndex = 0
 let mermaidSources: string[] = []
@@ -264,11 +255,24 @@ markdownRenderer.heading = ({ depth, text }) => {
   const id = `markfly-heading-${renderedHeadingIndex++}`
   return `<h${depth} id="${id}">${text}</h${depth}>\n`
 }
+markdownRenderer.html = ({ text }) => escapeRawHtml(text)
+markdownRenderer.image = ({ href, title, text }) => {
+  const alt = escapeRawHtml(text)
+  if (!isSafeImageHref(href)) {
+    return `<span class="markfly-blocked-image" title="Remote image blocked">[Image blocked: ${alt || 'no description'}]</span>`
+  }
+  const titleAttribute = title ? ` title="${escapeRawHtml(title)}"` : ''
+  return `<img src="${escapeRawHtml(href)}" alt="${alt}"${titleAttribute}>`
+}
 markdownRenderer.code = ({ text, lang }) => {
   const language = lang?.trim().split(/\s+/)[0]?.toLowerCase()
   if (language === 'mermaid') {
-    const sourceIndex = mermaidSources.push(text) - 1
-    const source = escapeHtml(text)
+    const sourceIndex = mermaidSources.length
+    const source = escapeRawHtml(text)
+    if (!canRenderMermaid(sourceIndex, text)) {
+      return `<pre><code class="language-mermaid">${source}</code></pre>\n`
+    }
+    mermaidSources.push(text)
     return `<section class="mermaid-block" data-mermaid-index="${sourceIndex}" data-mode="diagram">
       <div class="mermaid-toolbar"><span class="mermaid-label">Mermaid</span><div class="mermaid-view-options" role="group" aria-label="Mermaid view">
         <button type="button" data-mermaid-mode="diagram" aria-pressed="true">Diagram</button>
@@ -283,7 +287,7 @@ markdownRenderer.code = ({ text, lang }) => {
   const highlighted = hasLanguage
     ? hljs.highlight(text, { language: language as string }).value
     : hljs.highlightAuto(text).value
-  const languageClass = hasLanguage ? ` class="language-${escapeHtml(language as string)}"` : ''
+  const languageClass = hasLanguage ? ` class="language-${escapeRawHtml(language as string)}"` : ''
   return `<pre><code${languageClass}>${highlighted}</code></pre>\n`
 }
 
@@ -313,6 +317,14 @@ function applyMermaidModes(article: HTMLElement) {
 
 function onArticleClick(event: MouseEvent) {
   if (!(event.target instanceof Element)) return
+  const anchor = event.target.closest<HTMLAnchorElement>('a[href]')
+  if (anchor) {
+    const href = anchor.getAttribute('href')
+    if (href?.startsWith('#')) return
+    event.preventDefault()
+    if (href) window.electronAPI.openExternal(href).catch(error => console.error('Open link error:', error))
+    return
+  }
   const button = event.target.closest<HTMLButtonElement>('[data-mermaid-mode]')
   const block = button?.closest<HTMLElement>('.mermaid-block')
   const mode = button?.dataset.mermaidMode
@@ -682,8 +694,12 @@ async function openFile() {
 async function onWebDrop(e: DragEvent) {
   const file = e.dataTransfer?.files[0]
   if (file && (file.name.endsWith('.md') || file.name.endsWith('.markdown'))) {
-    const filePath = window.electronAPI.getPathForFile(file)
-    if (filePath) await selectFile(filePath)
+    try {
+      const result = await window.electronAPI.openDroppedFile(file)
+      await selectFile(result.path, result.content)
+    } catch (error) {
+      console.error('Drop file error:', error)
+    }
   }
 }
 

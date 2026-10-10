@@ -5,13 +5,14 @@ interface TabItem {
 }
 
 interface ElectronAPI {
-  readFile(path: string): Promise<string>
+  readFile(path: string): Promise<string | null>
   copyText(text: string): Promise<boolean>
   fetchMarkdownUrl(url: string): Promise<{ content: string; url: string }>
   watchFile(path: string): Promise<void>
   getArgs(): Promise<string | null>
   rendererReady(): Promise<void>
-  getPathForFile(file: File): string
+  openDroppedFile(file: File): Promise<{ path: string; content: string }>
+  openExternal(url: string): Promise<boolean>
   getTheme(): Promise<'light' | 'dark'>
   openFileDialog(): Promise<string | null>
   openFilePath(path: string): Promise<boolean>
