@@ -113,7 +113,7 @@ function downloadToFile(initialUrl, destination, expectedSize, onProgress, redir
         reject(new Error('Installer exceeds the 250 MiB download limit.'))
         return
       }
-      const totalBytes = Number.isSafeInteger(contentLength) && contentLength >= 0 ? contentLength : expectedSize
+      const totalBytes = Number.isSafeInteger(contentLength) && contentLength >= 0 ? contentLength : null
       const output = fs.createWriteStream(destination, { flags: received ? 'a' : 'w', mode: 0o600 })
       let bytesReceived = received
       let settled = false
@@ -176,6 +176,7 @@ function createUpdateService({ currentVersion, architecture, userDataPath, openP
   let validatedAsset = null
   let installerPath = null
   let partialPath = null
+  let partialDir = null
   let checkPromise = null
   let downloadPromise = null
 
@@ -264,6 +265,7 @@ function createUpdateService({ currentVersion, architecture, userDataPath, openP
       setState({ status: 'downloading', bytesReceived: 0, totalBytes: validatedAsset.size, error: null })
       try {
         const downloadDir = fs.mkdtempSync(path.join(os.tmpdir(), 'markfly-update-'))
+        partialDir = downloadDir
         partialPath = path.join(downloadDir, validatedAsset.name)
         await downloadToFile(validatedAsset.url, partialPath, validatedAsset.size, (bytesReceived, totalBytes) => {
           setState({ status: 'downloading', bytesReceived, totalBytes })
@@ -276,11 +278,16 @@ function createUpdateService({ currentVersion, architecture, userDataPath, openP
         }
         installerPath = partialPath
         partialPath = null
+        partialDir = null
         return setState({ status: 'ready', bytesReceived: stat.size, totalBytes: stat.size, error: null })
       } catch (error) {
         if (partialPath) {
           try { fs.unlinkSync(partialPath) } catch { /* partial already removed */ }
           partialPath = null
+        }
+        if (partialDir) {
+          try { fs.rmdirSync(partialDir) } catch { /* directory already removed */ }
+          partialDir = null
         }
         installerPath = null
         return setState({ status: 'error', error: error instanceof Error ? error.message : 'Installer download failed.' })
@@ -292,15 +299,23 @@ function createUpdateService({ currentVersion, architecture, userDataPath, openP
   async function openInstaller() {
     if (!installerPath || state.status !== 'ready') return setState({ status: 'error', error: 'No verified installer is ready to open.' })
     const verifiedPath = installerPath
-    const error = await openPath(verifiedPath)
-    if (error) return setState({ status: 'error', error: `Could not open Installer: ${error}` })
-    return setState({ status: 'opening', error: 'Finish installation in macOS Installer, then reopen Markfly.' })
+    try {
+      const error = await openPath(verifiedPath)
+      if (error) return setState({ status: 'error', error: `Could not open Installer: ${error}` })
+      return setState({ status: 'opening', error: 'Finish installation in macOS Installer, then reopen Markfly.' })
+    } catch (error) {
+      return setState({ status: 'error', error: `Could not open Installer: ${error instanceof Error ? error.message : 'unknown error'}` })
+    }
   }
 
   async function dispose() {
     if (partialPath) {
       try { fs.unlinkSync(partialPath) } catch { /* partial already removed */ }
       partialPath = null
+    }
+    if (partialDir) {
+      try { fs.rmdirSync(partialDir) } catch { /* directory already removed */ }
+      partialDir = null
     }
   }
 
