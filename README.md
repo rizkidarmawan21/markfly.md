@@ -71,6 +71,10 @@ npm run electron:build
 
 Output in `release/` — `.dmg`, `.pkg`, and `.zip`.
 
+## Releases
+
+Release naming and publishing steps: [docs/RELEASING.md](docs/RELEASING.md).
+
 ## Tech Stack
 
 | Layer             | Tech                                                                        |

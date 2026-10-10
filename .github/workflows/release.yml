@@ -18,6 +18,15 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Validate release version
+        run: |
+          package_version="$(node -p "require('./package.json').version")"
+          tag_version="${GITHUB_REF_NAME#v}"
+          if [ "$package_version" != "$tag_version" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version $package_version"
+            exit 1
+          fi
+
       - run: npm ci
 
       - run: npm run electron:build
@@ -38,6 +47,7 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           name: Markfly ${{ github.ref_name }}
+          generate_release_notes: true
           draft: false
           files: |
             release/*.dmg
