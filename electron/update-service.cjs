@@ -109,7 +109,7 @@ function downloadToFile(initialUrl, destination, expectedSize, onProgress, redir
       }
       const contentLength = Number(response.headers['content-length'])
       if (Number.isSafeInteger(contentLength) && contentLength > MAX_PACKAGE_BYTES) {
-        response.destroy(new Error('Installer exceeds the 250 MiB download limit.'))
+        response.resume()
         reject(new Error('Installer exceeds the 250 MiB download limit.'))
         return
       }
@@ -208,7 +208,7 @@ function createUpdateService({ currentVersion, architecture, userDataPath, openP
       if (comparison <= 0) {
         validatedAsset = null
         installerPath = null
-        return setState({ ...common, status: 'current' })
+        return setState({ ...common, releaseInfoAvailable: false, status: 'current' })
       }
       if (architecture !== 'arm64') {
         validatedAsset = null
