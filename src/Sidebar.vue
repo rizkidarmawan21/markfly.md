@@ -56,6 +56,14 @@
         </button>
       </div>
     </div>
+    <UpdateStatus
+      class="shrink-0"
+      :state="updateState"
+      @check="$emit('check-updates')"
+      @download="$emit('download-update')"
+      @open-installer="$emit('open-update-installer')"
+      @release-info="$emit('open-release-info')"
+    />
     <!-- Resize handle -->
     <div
       class="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-indigo-400/30 active:bg-indigo-400/50 transition-colors"
@@ -65,11 +73,14 @@
 </template>
 
 <script setup lang="ts">
+import UpdateStatus from './components/UpdateStatus.vue'
+
 defineProps<{
   tabs: TabItem[]
   activePath: string | null
   width: number
   visible: boolean
+  updateState: UpdateState
 }>()
 
 const emit = defineEmits<{
@@ -78,6 +89,10 @@ const emit = defineEmits<{
   close: [path: string]
   'import-markdown': []
   'import-url': []
+  'check-updates': []
+  'download-update': []
+  'open-update-installer': []
+  'open-release-info': []
 }>()
 
 function startResize(e: MouseEvent) {

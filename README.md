@@ -43,6 +43,12 @@ rendering, toggle raw source, auto-reload on file changes.</p>
 3. Follow the standard macOS installer (requires admin password)
 4. Launch Markfly from `/Applications`
 
+## In-app updates
+
+Markfly checks GitHub Releases when it starts. Use **Help → Check for Updates…** to check manually. Update status appears at the bottom of the sidebar; **Release Info** opens the GitHub release page separately.
+
+When an update is available, choose **Download Update**, then **Open Installer** after the package is verified. Confirm installation in macOS Installer and reopen Markfly yourself. Markfly does not silently replace or restart the app. This manual flow does not require an Apple Developer account; because releases are not Developer ID signed, macOS may show a security warning or require approval before opening the installer/app. Fully automatic in-app replacement would require Developer ID-signed releases and a separate updater design.
+
 ### Option B: DMG (drag-drop, no password)
 
 1. Download `Markfly-<version>-arm64.dmg` from [Releases](../../releases)
