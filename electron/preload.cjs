@@ -12,6 +12,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke('open-dropped-file', path)
   },
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
+  getUpdateState: () => ipcRenderer.invoke('get-update-state'),
+  checkForUpdates: () => ipcRenderer.invoke('update-check'),
+  downloadUpdate: () => ipcRenderer.invoke('update-download'),
+  openUpdateInstaller: () => ipcRenderer.invoke('update-open-installer'),
+  openUpdateRelease: () => ipcRenderer.invoke('update-open-release'),
+  onUpdateState: (cb) => {
+    const handler = (_event, state) => cb(state)
+    ipcRenderer.on('update-state', handler)
+    return () => ipcRenderer.removeListener('update-state', handler)
+  },
   getTheme: () => ipcRenderer.invoke('get-theme'),
   openFileDialog: () => ipcRenderer.invoke('open-file-dialog'),
   openFilePath: (path) => ipcRenderer.invoke('open-file-path', path),
