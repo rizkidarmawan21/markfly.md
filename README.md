@@ -75,6 +75,10 @@ Output in `release/` — `.dmg`, `.pkg`, and `.zip`.
 
 Release naming and publishing steps: [docs/RELEASING.md](docs/RELEASING.md).
 
+## Security
+
+Dependency audit results and remaining findings: [docs/DEPENDENCY-AUDIT.md](docs/DEPENDENCY-AUDIT.md).
+
 ## Tech Stack
 
 | Layer             | Tech                                                                        |
