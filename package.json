@@ -1,7 +1,7 @@
 {
   "name": "markfly",
   "private": true,
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Markdown preview app for macOS",
   "author": "darms",
   "type": "module",
@@ -28,7 +28,7 @@
     "@vue/tsconfig": "^0.9.1",
     "concurrently": "^10.0.3",
     "electron": "^43.0.0",
-    "electron-builder": "^26.15.3",
+    "electron-builder": "^26.17.0",
     "github-markdown-css": "^5.9.0",
     "highlight.js": "^11.11.1",
     "marked": "^18.0.5",
@@ -38,5 +38,8 @@
     "vue": "^3.5.39",
     "vue-tsc": "^3.3.5",
     "wait-on": "^9.0.10"
+  },
+  "overrides": {
+    "@electron/get": "5.1.0"
   }
 }
