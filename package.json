@@ -8,15 +8,18 @@
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
-    "test": "node --test electron/security.test.cjs src/markdown-security.test.ts",
+    "test": "node --test electron/security.test.cjs src/markdown-security.test.ts src/markdown-tables.test.ts",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "electron:dev": "concurrently -k \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
-    "electron:build": "npm run build && electron-builder"
+    "electron:build": "npm run build && electron-builder",
+    "native:build": "./scripts/build-native.sh",
+    "native:dmg": "./scripts/build-native.sh --dmg",
+    "native:test": "./scripts/test-native.sh"
   },
   "dependencies": {
     "chokidar": "^5.0.0",
-    "dompurify": "^3.4.16",
+    "dompurify": "^3.4.17",
     "katex": "^0.18.10",
     "marked-katex-extension": "^5.1.13",
     "mermaid": "^12.2.0"

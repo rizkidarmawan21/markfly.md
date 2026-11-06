@@ -25,3 +25,13 @@
 6. Check the workflow completed successfully. Verify release title, tag, generated notes, and all expected assets on GitHub.
 
 Do not upload build artifacts manually unless the automated workflow is unavailable and a maintainer explicitly chooses a manual recovery.
+
+## Native qualification
+
+Build the local AppKit application with `npm ci` followed by `npm run native:build`. Use `npm run native:dmg` to build a drag-and-drop disk image in `release/native/`. The default build is ad hoc signed and is suitable for local testing. It contains the Vite renderer and uses the system WebKit. The current tag workflow continues to build the Electron release during qualification.
+
+Run `npm run native:test` after building. Pass the absolute path to the official Pandoc binary as an optional argument to also validate Word export.
+
+For a distribution build, configure `MARKFLY_SIGN_IDENTITY` with a Developer ID Application identity and `MARKFLY_NOTARY_PROFILE` with an existing `notarytool` Keychain profile. Run `npm run native:dmg`. The script signs the app with Hardened Runtime, signs the image, waits for notarization, and staples the ticket. Keep credentials in the Keychain.
+
+On a Mac without a prior Markfly installation, download and install the signed DMG. Open a Markdown file via Finder. Check the document tabs, live reload after an external editor saves, raw view, theme, zoom, search, and Mermaid modes. Edit one table and compare the saved source around it. Export a long document to A4 and Letter. Open the DOCX in Microsoft Word and verify editable tables and equations and embedded diagrams. Compare the DMG size, Finder-to-render time, and idle memory with the released Electron build before promoting the native release.

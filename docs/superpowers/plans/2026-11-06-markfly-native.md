@@ -17,8 +17,10 @@
 
 ## Work and verification
 
-- [ ] Native shell in `native/`. Bundle Vite output, grant access from AppKit open and drop, restore trusted state, watch saves and replacements, and qualify bridge origins. Run packaged smoke with synthetic data and test stale and unauthorized writes.
-- [ ] Visual tables in `src/App.vue`, `src/components/TableEditor.vue`, and `src/markdown-tables.ts`. Test escaped pipes, mixed line endings, duplicate and nested tables, undo, focus, and source preservation. Use the native save contract to reject concurrent edits.
-- [ ] PDF in `native/PDFExporter.swift` and `src/pdf-export.ts`. Reproduce the single-page WebKit output with a long fixture before implementing pagination. Inspect pages for A4 and Letter, end marker, clipping, and selectable text.
-- [ ] Word in `native/WordExporter.swift` and `src/docx-export.ts`. Use a pinned optional helper and the current document snapshot. Inspect OOXML for editable tables and formulas and an embedded diagram. Open the output in Word before release qualification.
+- [x] Native shell in `native/`. Bundle Vite output, grant access from AppKit open and drop, restore trusted state, watch saves and replacements, and qualify bridge origins. Run packaged smoke with synthetic data and test stale and unauthorized writes.
+- [x] Visual tables in `src/App.vue`, `src/components/TableEditor.vue`, and `src/markdown-tables.ts`. Test escaped pipes, mixed line endings, duplicate and nested tables, undo, focus, and source preservation. Use the native save contract to reject concurrent edits.
+- [x] PDF in `native/PDFExporter.swift` and `src/pdf-export.ts`. Reproduce the single-page WebKit output with a long fixture before implementing pagination. Inspect pages for A4 and Letter, end marker, clipping, and selectable text.
+- [x] Word in `native/WordExporter.swift` and `src/docx-export.ts`. Use a pinned optional helper and the current document snapshot. Inspect OOXML for editable tables and formulas and an embedded diagram. The generated DOCX passed structural checks. Open the output in Word before release qualification.
 - [ ] Build and distribution with `scripts/build-native.sh` and `native/Info.plist`. Verify arm64 package contents and association. Compare against v0.4.3, then sign, notarize, and test a downloaded DMG on a clean Mac.
+
+Local verification passed on macOS arm64. Distribution remains gated on Developer ID signing and notarization, fresh-Mac installation and performance checks, and layout verification in Microsoft Word.

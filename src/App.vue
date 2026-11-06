@@ -134,6 +134,16 @@
       {{ copyStatus }}
     </div>
 
+    <TableEditor
+      v-if="tableEdit"
+      :table="tableEdit.table.data"
+      :saving="tableSaving"
+      :conflicted="tableConflicted"
+      :error="tableSaveError"
+      @save="saveEditedTable"
+      @cancel="closeTableEditor"
+    />
+
     <div v-if="urlImportOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.esc.stop="closeUrlImport">
       <button class="absolute inset-0 bg-black/25 backdrop-blur-sm cursor-default" aria-label="Close URL import dialog" @click="closeUrlImport"></button>
       <form
@@ -170,8 +180,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
-import { marked } from 'marked'
+import { ref, shallowRef, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import { marked, type Tokens } from 'marked'
 import markedKatex from 'marked-katex-extension'
 import hljs from 'highlight.js/lib/core'
 import bash from 'highlight.js/lib/languages/bash'
@@ -203,7 +213,11 @@ import darkHljsUrl from 'highlight.js/styles/github-dark.css?url'
 import Sidebar from './Sidebar.vue'
 import TabBar from './TabBar.vue'
 import OutlinePanel from './components/OutlinePanel.vue'
+import TableEditor from './components/TableEditor.vue'
+import { preparePDFExport } from './pdf-export'
+import { prepareWordExport } from './docx-export'
 import { canRenderMermaid, escapeRawHtml, isSafeImageHref } from './markdown-security'
+import { findEditableTables, replaceTable, type EditableTable, type TableData } from './markdown-tables'
 
 for (const [name, language] of Object.entries({
   bash, c, cpp, csharp, css, diff, go, java, javascript, json,
@@ -249,7 +263,16 @@ const searchQuery = ref('')
 const searchMatchCount = ref(0)
 const searchIndex = ref(0)
 const copyStatus = ref('')
+const tableEdit = shallowRef<{ path: string; source: string; table: EditableTable; index: number } | null>(null)
+const tableSaving = ref(false)
+const tableSaveError = ref('')
+const tableConflictOnSave = ref(false)
+const tableConflicted = computed(() => {
+  const edit = tableEdit.value
+  return !!edit && (tableConflictOnSave.value || fileContents.value[edit.path] !== edit.source)
+})
 let searchRanges: Range[] = []
+let exportInProgress = false
 let copyStatusTimer: ReturnType<typeof setTimeout> | undefined
 let removeUpdateStateListener: (() => void) | null = null
 
@@ -286,6 +309,7 @@ type HighlightRegistryApi = {
 type HighlightConstructor = new (...ranges: Range[]) => unknown
 
 const markdownRenderer = new marked.Renderer()
+let tableControlIndices = new Map<Tokens.Table, number>()
 let renderedHeadingIndex = 0
 let mermaidSources: string[] = []
 let mermaidRenderVersion = 0
@@ -305,6 +329,13 @@ markdownRenderer.image = ({ href, title, text }) => {
   }
   const titleAttribute = title ? ` title="${escapeRawHtml(title)}"` : ''
   return `<img src="${escapeRawHtml(href)}" alt="${alt}"${titleAttribute}>`
+}
+const renderMarkdownTable = markdownRenderer.table
+markdownRenderer.table = function (token) {
+  const html = renderMarkdownTable.call(this, token)
+  const index = tableControlIndices.get(token)
+  if (index === undefined) return html
+  return `<div data-table-editor-control class="mb-1"><button type="button" data-edit-table="${index}" class="rounded-md border border-gray-400 px-2.5 py-1 text-sm hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-gray-500 dark:hover:bg-gray-700">Edit Table</button></div>\n${html}`
 }
 markdownRenderer.code = ({ text, lang }) => {
   const language = lang?.trim().split(/\s+/)[0]?.toLowerCase()
@@ -335,16 +366,67 @@ markdownRenderer.code = ({ text, lang }) => {
 
 const activeTab = computed(() => tabs.value.find(t => t.path === activePath.value))
 
-const rendered = computed(() => {
-  const content = activePath.value ? fileContents.value[activePath.value] || '' : ''
+const renderedDocument = computed(() => {
+  const path = activePath.value
+  const source = path ? fileContents.value[path] || '' : ''
   renderedHeadingIndex = 0
   mermaidSources = []
-  const html = marked.parse(content, {
-    async: false,
-    renderer: markdownRenderer,
-  }) as string
-  return DOMPurify.sanitize(html)
+  const tokens = marked.lexer(source)
+  const tables = path && !isRemotePath(path) && window.electronAPI?.saveTable
+    ? findEditableTables(source, tokens)
+    : new Map<Tokens.Table, EditableTable>()
+  tableControlIndices = new Map([...tables.keys()].map((token, index) => [token, index]))
+  const html = marked.parser(tokens, { ...marked.defaults, renderer: markdownRenderer })
+  return { html: DOMPurify.sanitize(html), path, source, tables: [...tables.values()] }
 })
+const rendered = computed(() => renderedDocument.value.html)
+
+function openTableEditor(index: number) {
+  const { path, source, tables } = renderedDocument.value
+  const table = tables[index]
+  if (!path || !table || path !== activePath.value || tableEdit.value) return
+  tableSaveError.value = ''
+  tableConflictOnSave.value = false
+  tableEdit.value = { path, source, table, index }
+}
+
+async function closeTableEditor() {
+  const edit = tableEdit.value
+  tableEdit.value = null
+  await nextTick()
+  if (edit?.path === activePath.value) {
+    articleEl.value?.querySelector<HTMLButtonElement>(`[data-edit-table="${edit.index}"]`)?.focus({ preventScroll: true })
+  }
+}
+
+async function saveEditedTable(draft: TableData) {
+  const edit = tableEdit.value
+  if (!edit || tableSaving.value || tableConflicted.value || !window.electronAPI.saveTable) return
+  const updated = replaceTable(edit.source, edit.table, draft)
+  if (updated === null) {
+    tableSaveError.value = 'These edits could not be represented as a Markdown table.'
+    return
+  }
+
+  tableSaving.value = true
+  tableSaveError.value = ''
+  try {
+    const saved = await window.electronAPI.saveTable(edit.path, edit.source, updated)
+    if (!saved) {
+      tableConflictOnSave.value = true
+      const disk = await window.electronAPI.readFile(edit.path)
+      if (disk !== null && fileContents.value[edit.path] === edit.source) fileContents.value[edit.path] = disk
+      return
+    }
+    if (fileContents.value[edit.path] === edit.source) fileContents.value[edit.path] = updated
+    await closeTableEditor()
+  } catch (error) {
+    console.error('Save table error:', error)
+    tableSaveError.value = 'The table could not be saved. Check that the file is writable and try again.'
+  } finally {
+    tableSaving.value = false
+  }
+}
 
 function applyMermaidModes(article: HTMLElement) {
   article.querySelectorAll<HTMLElement>('.mermaid-block').forEach(block => {
@@ -359,6 +441,11 @@ function applyMermaidModes(article: HTMLElement) {
 
 function onArticleClick(event: MouseEvent) {
   if (!(event.target instanceof Element)) return
+  const tableControl = event.target.closest<HTMLButtonElement>('[data-edit-table]')
+  if (tableControl) {
+    openTableEditor(Number(tableControl.dataset.editTable))
+    return
+  }
   const anchor = event.target.closest<HTMLAnchorElement>('a[href]')
   if (anchor) {
     const href = anchor.getAttribute('href')
@@ -413,7 +500,10 @@ function refreshSearch() {
   if (!query || !root) return
 
   const normalizedQuery = query.toLocaleLowerCase()
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: node => node.parentElement?.closest('[data-table-editor-control]')
+      ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT,
+  })
   let node = walker.nextNode()
   while (node) {
     const text = node.textContent || ''
@@ -494,6 +584,63 @@ async function handleTabAction(path: string, action: 'search' | 'zoom-out' | 'zo
   saveState()
 }
 
+async function exportDocument(event: Event) {
+  const kind: unknown = (event as CustomEvent).detail
+  const path = activePath.value
+  const name = activeTab.value?.name
+  const api = window.electronAPI
+  if (!path || !name || exportInProgress || tableEdit.value) return
+  if ((kind !== 'pdf' || !api.exportPDF) && (kind !== 'word' || !api.exportWord)) return
+  if (!Object.hasOwn(fileContents.value, path)) {
+    showExportStatus('Wait for the document to finish loading before exporting.')
+    return
+  }
+
+  const source = fileContents.value[path]
+  exportInProgress = true
+  const view = documentViews.value[path]
+  const restoreRaw = view?.showRaw === true
+  try {
+    let html = ''
+    let word: Awaited<ReturnType<typeof prepareWordExport>> | undefined
+    try {
+      if (restoreRaw) view.showRaw = false
+      await nextTick()
+      await nextTick()
+      const version = mermaidRenderVersion
+      await mermaidRenderQueue
+      const article = articleEl.value
+      if (!article || activePath.value !== path || fileContents.value[path] !== source || mermaidRenderVersion !== version) {
+        throw new Error('The document changed while preparing the export. Try again.')
+      }
+      if (kind === 'pdf') html = preparePDFExport(article)
+      else {
+        word = await prepareWordExport(source, article)
+        if (activePath.value !== path || fileContents.value[path] !== source || mermaidRenderVersion !== version) {
+          throw new Error('The document changed while preparing the export. Try again.')
+        }
+      }
+    } finally {
+      if (restoreRaw) view.showRaw = true
+    }
+
+    const saved = kind === 'pdf'
+      ? await api.exportPDF?.(name, html, 'A4')
+      : word && await api.exportWord?.(name, word.markdown, word.images)
+    if (saved) showExportStatus(kind === 'pdf' ? 'PDF saved' : 'Word document saved')
+  } catch (error) {
+    showExportStatus(error instanceof Error ? error.message : 'Could not export this document.')
+  } finally {
+    exportInProgress = false
+  }
+}
+
+function showExportStatus(message: string) {
+  clearTimeout(copyStatusTimer)
+  copyStatus.value = message
+  copyStatusTimer = setTimeout(() => { copyStatus.value = '' }, 5000)
+}
+
 function closeSearch() {
   searchOpen.value = false
   searchQuery.value = ''
@@ -501,10 +648,18 @@ function closeSearch() {
 }
 
 function handleGlobalKeydown(event: KeyboardEvent) {
-  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f' && activePath.value) {
-    event.preventDefault()
-    openSearch()
-  } else if (event.key === 'Escape' && searchOpen.value) {
+  if (tableEdit.value) return
+  const path = activePath.value
+  const key = event.key.toLowerCase()
+  if ((event.metaKey || event.ctrlKey) && path) {
+    if (key === 'f') {
+      event.preventDefault()
+      openSearch()
+    } else if (key === '=' || key === '+' || key === '-' || key === '0') {
+      event.preventDefault()
+      handleTabAction(path, key === '0' ? 'zoom-reset' : key === '-' ? 'zoom-out' : 'zoom-in')
+    }
+  } else if (key === 'escape' && searchOpen.value) {
     event.preventDefault()
     closeSearch()
   }
@@ -609,6 +764,10 @@ function closeUrlImport() {
   urlImportValue.value = ''
 }
 
+function isMarkdownPath(path: string) {
+  return /\.(?:md|markdown|mdown|markdn)$/i.test(path)
+}
+
 function isRemotePath(path: string) {
   return /^https?:\/\//i.test(path)
 }
@@ -684,7 +843,19 @@ async function closeTab(path: string) {
   saveState()
 }
 
-async function loadFileContent(filePath: string) {
+watch(activePath, async path => {
+  if (!path || isRemotePath(path)) return
+  try {
+    await window.electronAPI.watchFile(path)
+    if (activePath.value === path && Object.hasOwn(fileContents.value, path)) {
+      await loadFileContent(path, false)
+    }
+  } catch (error) {
+    console.error('Could not watch Markdown file:', error)
+  }
+})
+
+async function loadFileContent(filePath: string, recordRecent = true) {
   try {
     if (isRemotePath(filePath)) {
       const result = await window.electronAPI.fetchMarkdownUrl(filePath)
@@ -694,10 +865,7 @@ async function loadFileContent(filePath: string) {
 
     const text = await window.electronAPI.readFile(filePath)
     fileContents.value[filePath] = text ?? '> Permission denied — unable to read this file.'
-    if (text) {
-      await window.electronAPI.watchFile(filePath)
-      await window.electronAPI.openFilePath(filePath)
-    }
+    if (text !== null && recordRecent) await window.electronAPI.openFilePath(filePath)
   } catch (err) {
     console.error('Error reading file:', err)
   }
@@ -735,7 +903,7 @@ async function openFile() {
 
 async function onWebDrop(e: DragEvent) {
   const file = e.dataTransfer?.files[0]
-  if (file && (file.name.endsWith('.md') || file.name.endsWith('.markdown'))) {
+  if (!window.electronAPI.saveTable && file && isMarkdownPath(file.name)) {
     try {
       const result = await window.electronAPI.openDroppedFile(file)
       await selectFile(result.path, result.content)
@@ -761,6 +929,7 @@ function applyTheme(dark: boolean) {
 
 onMounted(async () => {
   window.addEventListener('keydown', handleGlobalKeydown)
+  window.addEventListener('markfly-export', exportDocument)
   removeUpdateStateListener = window.electronAPI.onUpdateState(applyUpdateState)
   try { applyUpdateState(await window.electronAPI.getUpdateState()) } catch { /* updater state unavailable */ }
   const mkLink = (id: string, url: string, disabled: boolean) => {
@@ -814,20 +983,19 @@ onMounted(async () => {
   }
 
   window.electronAPI.onFileChanged(async () => {
-    if (activePath.value) {
-      await loadFileContent(activePath.value)
-    }
+    const path = activePath.value
+    if (path && !isRemotePath(path)) await loadFileContent(path, false)
   })
 
   window.electronAPI.onOpenFile(async (path: string) => {
-    if (path.endsWith('.md') || path.endsWith('.markdown')) {
+    if (isMarkdownPath(path)) {
       await selectFile(path)
     }
   })
 
   try {
     const filePath = await window.electronAPI.getArgs()
-    if (filePath && (filePath.endsWith('.md') || filePath.endsWith('.markdown'))) {
+    if (filePath && isMarkdownPath(filePath)) {
       await selectFile(filePath)
     }
   } catch { /* no args */ }
@@ -841,6 +1009,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
+  window.removeEventListener('markfly-export', exportDocument)
   removeUpdateStateListener?.()
   removeUpdateStateListener = null
   clearSearchHighlights()

@@ -19,6 +19,9 @@ interface UpdateState {
 
 interface ElectronAPI {
   readFile(path: string): Promise<string | null>
+  saveTable?(path: string, expected: string, next: string): Promise<boolean>
+  exportPDF?(name: string, html: string, pageSize: 'A4' | 'Letter'): Promise<boolean>
+  exportWord?(name: string, markdown: string, images: Record<string, string>): Promise<boolean>
   copyText(text: string): Promise<boolean>
   fetchMarkdownUrl(url: string): Promise<{ content: string; url: string }>
   watchFile(path: string): Promise<void>

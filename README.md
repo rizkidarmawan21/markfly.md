@@ -8,7 +8,7 @@
 
 </p>
 
-<p align="center"><strong>Minimal, native macOS markdown viewer.</strong></
+<p align="center"><strong>Minimal Markdown viewer for macOS.</strong></
 p>
 <p align="center">Open `.md` files from Finder, preview with GitHub-styled
 rendering, toggle raw source, auto-reload on file changes.</p>
