@@ -676,3 +676,31 @@ body {
     padding: 15px;
   }
 }
+
+.markdown-body [data-table-editor-control] {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 3px;
+}
+
+.markdown-body [data-edit-table] {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  color: var(--mf-muted);
+  cursor: pointer;
+}
+
+.markdown-body [data-edit-table] svg { width: 17px; height: 17px; }
+
+.markdown-body [data-edit-table]:is(:hover, :focus-visible) {
+  background: var(--mf-surface-card);
+  color: var(--mf-ink);
+}
+
+.markdown-body [data-edit-table]:focus-visible {
+  outline: 2px solid var(--mf-primary-active);
+  outline-offset: 1px;
+}

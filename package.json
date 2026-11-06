@@ -1,7 +1,7 @@
 {
   "name": "markfly",
   "private": true,
-  "version": "0.4.3",
+  "version": "0.5.0",
   "description": "Markdown preview app for macOS",
   "author": "darms",
   "type": "module",

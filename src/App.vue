@@ -68,6 +68,34 @@
           <button @click="handleTabAction(activePath, 'copy')" title="Copy as Markdown" aria-label="Copy as Markdown" class="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer">
             <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8V5a2 2 0 00-2-2H5a2 2 0 00-2 2v9a2 2 0 002 2h3"/></svg>
           </button>
+          <div
+            v-if="canExportPDF || canExportWord"
+            ref="exportsControl"
+            class="relative shrink-0"
+            @focusout="onExportsFocusOut"
+            @keydown.esc="onExportsEscape"
+            @keydown.up.prevent="focusExportOption(-1)"
+            @keydown.down.prevent="focusExportOption(1)"
+          >
+            <button
+              ref="exportsButton"
+              type="button"
+              title="Exports"
+              aria-label="Exports"
+              :aria-expanded="exportsOpen"
+              :aria-controls="exportsOpen ? 'export-options' : undefined"
+              :disabled="exportInProgress || !!tableEdit"
+              class="block p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer disabled:opacity-50"
+              :class="{ 'bg-gray-100 dark:bg-gray-800': exportsOpen }"
+              @click="toggleExports"
+            >
+              <svg aria-hidden="true" class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m-4-4 4 4 4-4M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg>
+            </button>
+            <div v-if="exportsOpen" id="export-options" class="app-dialog absolute top-full right-0 z-30 mt-1 min-w-28 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#252320] p-1 shadow-lg">
+              <button v-if="canExportPDF" type="button" class="block w-full rounded px-2.5 py-1.5 text-left text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer" @click="exportDocument('pdf')">PDF</button>
+              <button v-if="canExportWord" type="button" class="block w-full rounded px-2.5 py-1.5 text-left text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer" @click="exportDocument('word')">Word</button>
+            </div>
+          </div>
           <div class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1"></div>
           <button @click="outlineOpen = !outlineOpen" :aria-label="outlineOpen ? 'Close outline' : 'Open outline'" :title="outlineOpen ? 'Close outline' : 'Open outline'" :class="outlineOpen ? 'bg-gray-100 dark:bg-gray-800 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'" class="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="7" cy="7" r="3" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M13 7h8"/><circle cx="7" cy="17" r="3" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M13 17h8"/></svg>
@@ -272,7 +300,12 @@ const tableConflicted = computed(() => {
   return !!edit && (tableConflictOnSave.value || fileContents.value[edit.path] !== edit.source)
 })
 let searchRanges: Range[] = []
-let exportInProgress = false
+const exportInProgress = ref(false)
+const canExportPDF = !!window.electronAPI?.exportPDF
+const canExportWord = !!window.electronAPI?.exportWord
+const exportsOpen = ref(false)
+const exportsControl = ref<HTMLElement | null>(null)
+const exportsButton = ref<HTMLButtonElement | null>(null)
 let copyStatusTimer: ReturnType<typeof setTimeout> | undefined
 let removeUpdateStateListener: (() => void) | null = null
 
@@ -335,7 +368,7 @@ markdownRenderer.table = function (token) {
   const html = renderMarkdownTable.call(this, token)
   const index = tableControlIndices.get(token)
   if (index === undefined) return html
-  return `<div data-table-editor-control class="mb-1"><button type="button" data-edit-table="${index}" class="rounded-md border border-gray-400 px-2.5 py-1 text-sm hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-gray-500 dark:hover:bg-gray-700">Edit Table</button></div>\n${html}`
+  return `<div data-table-editor-control><button type="button" data-edit-table="${index}" aria-label="Edit Table" title="Edit table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 10h16M4 14h16M12 5v14"/></svg></button></div>\n${html}`
 }
 markdownRenderer.code = ({ text, lang }) => {
   const language = lang?.trim().split(/\s+/)[0]?.toLowerCase()
@@ -584,20 +617,72 @@ async function handleTabAction(path: string, action: 'search' | 'zoom-out' | 'zo
   saveState()
 }
 
-async function exportDocument(event: Event) {
+function closeExports(restoreFocus = false) {
+  if (!exportsOpen.value) return
+  exportsOpen.value = false
+  if (restoreFocus) exportsButton.value?.focus()
+}
+
+async function toggleExports(event: MouseEvent) {
+  if (exportsOpen.value) {
+    closeExports(true)
+    return
+  }
+  exportsButton.value?.focus()
+  exportsOpen.value = true
+  if (event.detail === 0) {
+    await nextTick()
+    focusExportOption(1)
+  }
+}
+
+function focusExportOption(direction: 1 | -1) {
+  if (!exportsOpen.value) return
+  const options = Array.from(exportsControl.value?.querySelectorAll<HTMLButtonElement>('#export-options button') ?? [])
+  if (!options.length) return
+  const current = options.findIndex(option => option === document.activeElement)
+  const next = current < 0
+    ? (direction === 1 ? 0 : options.length - 1)
+    : (current + direction + options.length) % options.length
+  options[next]?.focus()
+}
+
+function onExportsFocusOut(event: FocusEvent) {
+  if (event.relatedTarget instanceof Node && !exportsControl.value?.contains(event.relatedTarget)) closeExports()
+}
+
+function onExportsEscape(event: KeyboardEvent) {
+  if (!exportsOpen.value) return
+  event.preventDefault()
+  event.stopPropagation()
+  closeExports(true)
+}
+
+function onExportsOutsideClick(event: PointerEvent) {
+  if (event.target instanceof Node && !exportsControl.value?.contains(event.target)) closeExports()
+}
+
+function onNativeExport(event: Event) {
   const kind: unknown = (event as CustomEvent).detail
+  if (kind === 'pdf' || kind === 'word') void exportDocument(kind)
+}
+
+watch(activePath, () => closeExports())
+
+async function exportDocument(kind: 'pdf' | 'word') {
+  closeExports(true)
   const path = activePath.value
   const name = activeTab.value?.name
   const api = window.electronAPI
-  if (!path || !name || exportInProgress || tableEdit.value) return
-  if ((kind !== 'pdf' || !api.exportPDF) && (kind !== 'word' || !api.exportWord)) return
+  if (!path || !name || exportInProgress.value || tableEdit.value) return
+  if (kind === 'pdf' ? !api.exportPDF : !api.exportWord) return
   if (!Object.hasOwn(fileContents.value, path)) {
     showExportStatus('Wait for the document to finish loading before exporting.')
     return
   }
 
   const source = fileContents.value[path]
-  exportInProgress = true
+  exportInProgress.value = true
   const view = documentViews.value[path]
   const restoreRaw = view?.showRaw === true
   try {
@@ -631,7 +716,7 @@ async function exportDocument(event: Event) {
   } catch (error) {
     showExportStatus(error instanceof Error ? error.message : 'Could not export this document.')
   } finally {
-    exportInProgress = false
+    exportInProgress.value = false
   }
 }
 
@@ -929,7 +1014,8 @@ function applyTheme(dark: boolean) {
 
 onMounted(async () => {
   window.addEventListener('keydown', handleGlobalKeydown)
-  window.addEventListener('markfly-export', exportDocument)
+  window.addEventListener('markfly-export', onNativeExport)
+  window.addEventListener('pointerdown', onExportsOutsideClick)
   removeUpdateStateListener = window.electronAPI.onUpdateState(applyUpdateState)
   try { applyUpdateState(await window.electronAPI.getUpdateState()) } catch { /* updater state unavailable */ }
   const mkLink = (id: string, url: string, disabled: boolean) => {
@@ -1009,7 +1095,8 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
-  window.removeEventListener('markfly-export', exportDocument)
+  window.removeEventListener('markfly-export', onNativeExport)
+  window.removeEventListener('pointerdown', onExportsOutsideClick)
   removeUpdateStateListener?.()
   removeUpdateStateListener = null
   clearSearchHighlights()
